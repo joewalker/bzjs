@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { format } from 'date-fns';
 
 /**
  * bugzilla.d.ts is generated from bugzilla.js
@@ -8,12 +9,13 @@ import fetch from 'node-fetch';
  * @typedef {import('./bugzilla-support.js').BugzillaConstructorOptions} BugzillaConstructorOptions
  * @typedef {import('./bugzilla-support.js').BugStatusEnum} BugStatusEnum
  * @typedef {import('./bugzilla-support.js').BugFieldEnum} BugFieldEnum
+ * @typedef {import('./bugzilla-support.js').MatchTypeEnum} MatchTypeEnum
  * @typedef {import('./bugzilla-support.js').SearchParams} SearchParams
  * @typedef {import('./bugzilla-support.js').Bug} Bug
  */
 
 /**
- * @type {BugStatusEnum}
+ * @type {Record<string, BugStatusEnum>}
  */
 export const BugStatus = Object.freeze({
   unconfirmed: 'UNCONFIRMED',
@@ -26,10 +28,77 @@ export const BugStatus = Object.freeze({
 });
 
 /**
- * @type {BugFieldEnum}
+ * This full list of bug fields is way too large, so we copy across the ones we
+ * need.
+ * @see bug-field.js
+ * @type {Record<string, BugFieldEnum>}
  */
 export const BugField = Object.freeze({
   status: 'bug_status',
+  webcompatPriority: 'cf_webcompat_priority',
+});
+
+/**
+ * The ways we do matching for advanced searches
+ * @type {Record<string, MatchTypeEnum>}
+ */
+export const MatchType = Object.freeze({
+  /** is equal to */
+  equals: 'equals',
+  /** is not equal to */
+  notequals: 'notequals',
+  /** is equal to any of the strings */
+  anyexact: 'anyexact',
+  /** contains the string */
+  substring: 'substring',
+  /** contains the string (exact case) */
+  casesubstring: 'casesubstring',
+  /** does not contain the string */
+  notsubstring: 'notsubstring',
+  /** contains any of the strings */
+  anywordssubstr: 'anywordssubstr',
+  /** contains all of the strings */
+  allwordssubstr: 'allwordssubstr',
+  /** contains none of the strings */
+  nowordssubstr: 'nowordssubstr',
+  /** matches regular expression */
+  regexp: 'regexp',
+  /** does not match regular expression */
+  notregexp: 'notregexp',
+  /** is less than */
+  lessthan: 'lessthan',
+  /** is less than or equal to */
+  lessthaneq: 'lessthaneq',
+  /** is greater than */
+  greaterthan: 'greaterthan',
+  /** is greater than or equal to */
+  greaterthaneq: 'greaterthaneq',
+  /** contains any of the words */
+  anywords: 'anywords',
+  /** contains all of the words */
+  allwords: 'allwords',
+  /** contains none of the words */
+  nowords: 'nowords',
+  /** ever changed */
+  everchanged: 'everchanged',
+  /** changed before */
+  changedbefore: 'changedbefore',
+  /** changed after */
+  changedafter: 'changedafter',
+  /** changed from */
+  changedfrom: 'changedfrom',
+  /** changed to */
+  changedto: 'changedto',
+  /** changed by */
+  changedby: 'changedby',
+  /** matches */
+  matches: 'matches',
+  /** does not match */
+  notmatches: 'notmatches',
+  /** is empty */
+  isempty: 'isempty',
+  /** is not empty */
+  isnotempty: 'isnotempty',
 });
 
 /**
@@ -51,7 +120,7 @@ export class Bugzilla {
 
   /**
    * @param {SearchParams} params
-   * @returns {Promise<ReadonlyArray<Bug>>}
+   * @returns {Promise<{ readonly bugs: ReadonlyArray<Bug> }>}
    */
   async search(params) {
     /**
@@ -91,6 +160,22 @@ export class Bugzilla {
       bzParams.push([ 'emailtype1', 'exact' ]);
     }
 
+    if (params.change != null) {
+      bzParams.push([ 'chfield', params.change.field ]);
+      bzParams.push([ 'chfieldfrom', format(params.change.from, 'yyyy-MM-dd') ]);
+      bzParams.push([ 'chfieldto', format(params.change.to, 'yyyy-MM-dd') ]);
+      bzParams.push([ 'chfieldvalue', params.change.value ]);
+    }
+
+    if (params.advanced != null) {
+      for (let i = 0; i < params.advanced.length; i++) {
+        bzParams.push([ `f${i + 1}`, params.advanced[i].field ]);
+        bzParams.push([ `o${i + 1}`, params.advanced[i].matchType ]);
+        bzParams.push([ `v${i + 1}`, params.advanced[i].value ]);
+      }
+      bzParams.push([ 'query_format', 'advanced' ]);
+    }
+
     const outputParams = bzParams.map(([ key, value ]) => {
       return `${key}=${encodeURIComponent(value)}`;
     });
@@ -105,12 +190,17 @@ export class Bugzilla {
       console.log(url);
     }
 
-    const response = await fetch(url, {
-      headers,
-    });
+    if (params.dryRun) {
+      return { bugs: [] };
+    }
+    else {
+      const response = await fetch(url, {
+        headers,
+      });
 
-    // @ts-expect-error
-    return response.json();
+      // @ts-expect-error
+      return response.json();
+    }
   }
 
   /**
