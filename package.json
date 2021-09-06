@@ -13,7 +13,8 @@
     "typescript": "4.4.2"
   },
   "devDependencies": {
-    "@types/node": "16.7.10"
+    "@types/node": "16.7.10",
+    "prettier": "2.3.2"
   },
   "scripts": {
     "prepublish": "tsc -p ./jsconfig.json"

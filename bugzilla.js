@@ -169,9 +169,9 @@ export class Bugzilla {
 
     if (params.advanced != null) {
       for (let i = 0; i < params.advanced.length; i++) {
-        bzParams.push([ `f${i + 1}`, params.advanced[i].field ]);
-        bzParams.push([ `o${i + 1}`, params.advanced[i].matchType ]);
-        bzParams.push([ `v${i + 1}`, params.advanced[i].value ]);
+        bzParams.push([ `f${i + 1}`, params.advanced[ i ].field ]);
+        bzParams.push([ `o${i + 1}`, params.advanced[ i ].matchType ]);
+        bzParams.push([ `v${i + 1}`, params.advanced[ i ].value ]);
       }
       bzParams.push([ 'query_format', 'advanced' ]);
     }
