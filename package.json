@@ -1,0 +1,19 @@
+{
+  "name": "bzjs",
+  "version": "0.0.1",
+  "description": "JavaScript Interface to Bugzilla",
+  "main": "bugzilla.js",
+  "type": "module",
+  "author": "Joe Walker <jwalker@mozilla.com>",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "eslint": "7.32.0",
+    "node-fetch": "3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "16.7.10"
+  },
+  "scripts": {
+    "prepublish": "tsc -p ./jsconfig.json"
+  }
+}

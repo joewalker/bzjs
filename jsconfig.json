@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "checkJs": true,
+    "declaration": true,
+    "declarationDir": ".",
+    "emitDeclarationOnly": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": false
+  },
+  "files": [
+    "bugzilla.js"
+  ]
+}
