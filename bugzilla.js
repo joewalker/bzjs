@@ -109,10 +109,7 @@ export class Bugzilla {
    * @param {BugzillaConstructorOptions} options
    */
   constructor(options = {}) {
-    const {
-      origin = 'https://bugzilla.mozilla.org',
-      apiKey,
-    } = options;
+    const { origin = 'https://bugzilla.mozilla.org', apiKey } = options;
 
     this.origin = origin;
     this.apiKey = apiKey;
@@ -130,60 +127,59 @@ export class Bugzilla {
      * array of tuples instead of an object allows repeated params
      * @type {Array<[ key: string, value: string ]>}
      */
-    const bzParams = [
-    ];
+    const bzParams = [];
 
     if (params.product != null) {
-      bzParams.push([ 'product', params.product ]);
+      bzParams.push(['product', params.product]);
     }
 
     if (params.components != null) {
       /** @type {Array<[ key: string, value: string ]>} */
-      const x = params.components.map(value => ([ 'component', value ]));
+      const x = params.components.map(value => ['component', value]);
       bzParams.push(...x);
     }
 
     if (params.bugStatus != null) {
       /** @type {Array<[ key: string, value: string ]>} */ // @ts-ignore-error
-      const x = params.bugStatus.map(bugStatus => ([ 'bug_status', bugStatus ]));
+      const x = params.bugStatus.map(bugStatus => ['bug_status', bugStatus]);
       bzParams.push(...x);
     }
 
     if (params.keywords != null) {
-      bzParams.push([ 'keywords', params.keywords.join(', ') ]);
-      bzParams.push([ 'keywords_type', 'anywords' ]);
+      bzParams.push(['keywords', params.keywords.join(', ')]);
+      bzParams.push(['keywords_type', 'anywords']);
     }
 
     if (params.assignedTo != null) {
-      bzParams.push([ 'email1', params.assignedTo ]);
-      bzParams.push([ 'emailassigned_to1', '1' ]);
-      bzParams.push([ 'emailtype1', 'exact' ]);
+      bzParams.push(['email1', params.assignedTo]);
+      bzParams.push(['emailassigned_to1', '1']);
+      bzParams.push(['emailtype1', 'exact']);
     }
 
     if (params.change != null) {
-      bzParams.push([ 'chfield', params.change.field ]);
-      bzParams.push([ 'chfieldfrom', format(params.change.from, 'yyyy-MM-dd') ]);
-      bzParams.push([ 'chfieldto', format(params.change.to, 'yyyy-MM-dd') ]);
-      bzParams.push([ 'chfieldvalue', params.change.value ]);
+      bzParams.push(['chfield', params.change.field]);
+      bzParams.push(['chfieldfrom', format(params.change.from, 'yyyy-MM-dd')]);
+      bzParams.push(['chfieldto', format(params.change.to, 'yyyy-MM-dd')]);
+      bzParams.push(['chfieldvalue', params.change.value]);
     }
 
     if (params.advanced != null) {
       for (let i = 0; i < params.advanced.length; i++) {
-        bzParams.push([ `f${i + 1}`, params.advanced[ i ].field ]);
-        bzParams.push([ `o${i + 1}`, params.advanced[ i ].matchType ]);
-        bzParams.push([ `v${i + 1}`, params.advanced[ i ].value ]);
+        bzParams.push([`f${i + 1}`, params.advanced[i].field]);
+        bzParams.push([`o${i + 1}`, params.advanced[i].matchType]);
+        bzParams.push([`v${i + 1}`, params.advanced[i].value]);
       }
-      bzParams.push([ 'query_format', 'advanced' ]);
+      bzParams.push(['query_format', 'advanced']);
     }
 
-    const outputParams = bzParams.map(([ key, value ]) => {
+    const outputParams = bzParams.map(([key, value]) => {
       return `${key}=${encodeURIComponent(value)}`;
     });
     const url = `${this.origin}/rest/bug?${outputParams.join('&')}`;
 
     const headers = [];
     if (this.apiKey != null) {
-      headers.push([ 'X-BUGZILLA-API-KEY', this.apiKey ]);
+      headers.push(['X-BUGZILLA-API-KEY', this.apiKey]);
     }
 
     if (params.logQuery) {
