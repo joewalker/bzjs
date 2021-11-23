@@ -7,6 +7,7 @@
  * @typedef {import('./bugzilla-support.js').BugFieldEnum} BugFieldEnum
  * @typedef {import('./bugzilla-support.js').MatchTypeEnum} MatchTypeEnum
  * @typedef {import('./bugzilla-support.js').SearchParams} SearchParams
+ * @typedef {import('./bugzilla-support.js').SearchResults} SearchResults
  * @typedef {import('./bugzilla-support.js').Bug} Bug
  */
 /**
@@ -37,11 +38,9 @@ export class Bugzilla {
   apiKey: string;
   /**
    * @param {SearchParams} params
-   * @returns {Promise<{ readonly bugs: ReadonlyArray<Bug> }>}
+   * @returns {Promise<SearchResults>}
    */
-  search(params: SearchParams): Promise<{
-    readonly bugs: ReadonlyArray<Bug>;
-  }>;
+  search(params: SearchParams): Promise<SearchResults>;
   /**
    * @returns {Promise<ReadonlyArray<string>>}
    */
@@ -52,10 +51,10 @@ export class Bugzilla {
    */
   getComponentsForTeam(team: string): Promise<{}>;
 }
-export type BugzillaConstructorOptions =
-  import('./bugzilla-support.js').BugzillaConstructorOptions;
+export type BugzillaConstructorOptions = import('./bugzilla-support.js').BugzillaConstructorOptions;
 export type BugStatusEnum = import('./bugzilla-support.js').BugStatusEnum;
 export type BugFieldEnum = import('./bugzilla-support.js').BugFieldEnum;
 export type MatchTypeEnum = import('./bugzilla-support.js').MatchTypeEnum;
 export type SearchParams = import('./bugzilla-support.js').SearchParams;
+export type SearchResults = import('./bugzilla-support.js').SearchResults;
 export type Bug = import('./bugzilla-support.js').Bug;

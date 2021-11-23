@@ -11,6 +11,7 @@ import { format } from 'date-fns';
  * @typedef {import('./bugzilla-support.js').BugFieldEnum} BugFieldEnum
  * @typedef {import('./bugzilla-support.js').MatchTypeEnum} MatchTypeEnum
  * @typedef {import('./bugzilla-support.js').SearchParams} SearchParams
+ * @typedef {import('./bugzilla-support.js').SearchResults} SearchResults
  * @typedef {import('./bugzilla-support.js').Bug} Bug
  */
 
@@ -117,7 +118,7 @@ export class Bugzilla {
 
   /**
    * @param {SearchParams} params
-   * @returns {Promise<{ readonly bugs: ReadonlyArray<Bug> }>}
+   * @returns {Promise<SearchResults>}
    */
   async search(params) {
     /**
@@ -176,6 +177,7 @@ export class Bugzilla {
       return `${key}=${encodeURIComponent(value)}`;
     });
     const url = `${this.origin}/rest/bug?${outputParams.join('&')}`;
+    const checkUrl = `${this.origin}/buglist.cgi?${outputParams.join('&')}`;
 
     const headers = [];
     if (this.apiKey != null) {
@@ -187,15 +189,17 @@ export class Bugzilla {
     }
 
     if (params.dryRun) {
-      return { bugs: [] };
-    }
-    else {
+      return { bugs: [], checkUrl };
+    } else {
       const response = await fetch(url, {
         headers,
       });
 
-      // @ts-expect-error
-      return response.json();
+      return {
+        // @ts-expect-error
+        bugs: (await response.json()).bugs,
+        checkUrl,
+      };
     }
   }
 
@@ -207,7 +211,7 @@ export class Bugzilla {
 
     const headers = [];
     if (this.apiKey != null) {
-      headers.push([ 'X-BUGZILLA-API-KEY', this.apiKey ]);
+      headers.push(['X-BUGZILLA-API-KEY', this.apiKey]);
     }
 
     const response = await fetch(url, {
@@ -223,13 +227,13 @@ export class Bugzilla {
    * @returns {Promise<{}>}
    */
   async getComponentsForTeam(team) {
-    const url = (
-      `${this.origin}/rest/config/component_teams/${encodeURIComponent(team)}`
-    );
+    const url = `${
+      this.origin
+    }/rest/config/component_teams/${encodeURIComponent(team)}`;
 
     const headers = [];
     if (this.apiKey != null) {
-      headers.push([ 'X-BUGZILLA-API-KEY', this.apiKey ]);
+      headers.push(['X-BUGZILLA-API-KEY', this.apiKey]);
     }
 
     const response = await fetch(url, {
