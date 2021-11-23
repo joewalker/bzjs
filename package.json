@@ -1,7 +1,7 @@
 {
   "name": "bzjs",
   "version": "0.0.1",
-  "description": "JavaScript Interface to Bugzilla",
+  "description": "A NodeJS interface to Bugzilla",
   "main": "bugzilla.js",
   "type": "module",
   "author": "Joe Walker <jwalker@mozilla.com>",
