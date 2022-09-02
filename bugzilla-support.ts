@@ -12,7 +12,11 @@ export type BugStatusEnum =
   | 'VERIFIED'
   | 'CLOSED';
 
-export type BugFieldEnum = 'bug_status' | 'cf_webcompat_priority';
+export type BugFieldEnum =
+  | 'id'
+  | 'bug_status'
+  | 'cf_webcompat_priority'
+  | 'resolution';
 
 export type MatchTypeEnum =
   | 'equals'
@@ -61,7 +65,7 @@ export interface SearchParams {
   /**
    * This is an 'OR' criteria so any of these keywords must match
    */
-  readonly components?: ReadonlyArray<string>;
+  readonly components?: ReadonlyArray<Component | string>;
 
   /**
    * This is an 'OR' criteria so any of these keywords must match
@@ -87,7 +91,7 @@ export interface SearchParams {
    * Restrict the search to a single product (component names can be
    * duplicated across different products (e.g. 'Untriaged'))
    */
-  readonly product?: string;
+  readonly product?: Product | string | ReadonlyArray<Product | string>;
 
   /**
    *
@@ -103,6 +107,8 @@ export interface SearchParams {
     readonly matchType: MatchTypeEnum;
     readonly value: string;
   }>;
+
+  readonly includeFields?: ReadonlyArray<BugFieldEnum>;
 }
 
 /**
@@ -110,6 +116,14 @@ export interface SearchParams {
  */
 export interface SearchResults {
   readonly bugs: ReadonlyArray<Bug>;
+  readonly checkUrl: string;
+}
+
+/**
+ * The response from Bugzilla.count(...)
+ */
+export interface CountResults {
+  readonly bugCount: number;
   readonly checkUrl: string;
 }
 
@@ -287,3 +301,17 @@ export enum Type {
   Enhancement = 'enhancement',
   Task = 'task',
 }
+
+export type Team = string & { __team: true };
+//export type Product = string & { __product: true };
+export type Component = string & { __component: true };
+
+/**
+ * ComponentTeamMap allows us to quickly lookup a team given a component.
+ * It can be initialized either from a JSON file or from a Bugzilla instance.
+ * If a bugzilla instance is provided, it will make a set of API calls to
+ * construct the a new map (and if a cacheLocation is also provided the map will
+ * be written to this file). If no bugzilla instance is provided, it will read
+ * the map from the cacheLocation.
+ */
+export type ComponentsForTeam = Record<Team, Record<Product, Component[]>>;

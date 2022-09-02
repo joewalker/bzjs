@@ -1,14 +1,14 @@
 /**
- * bugzilla.d.ts is generated from bugzilla.js
- */
-/**
- * @typedef {import('./bugzilla-support.js').BugzillaConstructorOptions} BugzillaConstructorOptions
- * @typedef {import('./bugzilla-support.js').BugStatusEnum} BugStatusEnum
- * @typedef {import('./bugzilla-support.js').BugFieldEnum} BugFieldEnum
- * @typedef {import('./bugzilla-support.js').MatchTypeEnum} MatchTypeEnum
- * @typedef {import('./bugzilla-support.js').SearchParams} SearchParams
- * @typedef {import('./bugzilla-support.js').SearchResults} SearchResults
- * @typedef {import('./bugzilla-support.js').Bug} Bug
+ * @typedef {import('./bugzilla-support').Bug} Bug
+ * @typedef {import('./bugzilla-support').BugFieldEnum} BugFieldEnum
+ * @typedef {import('./bugzilla-support').BugStatusEnum} BugStatusEnum
+ * @typedef {import('./bugzilla-support').BugzillaConstructorOptions} BugzillaConstructorOptions
+ * @typedef {import('./bugzilla-support').ComponentsForTeam} ComponentsForTeam
+ * @typedef {import('./bugzilla-support').CountResults} CountResults
+ * @typedef {import('./bugzilla-support').MatchTypeEnum} MatchTypeEnum
+ * @typedef {import('./bugzilla-support').SearchParams} SearchParams
+ * @typedef {import('./bugzilla-support').SearchResults} SearchResults
+ * @typedef {import('./bugzilla-support').Team} Team
  */
 /**
  * @type {Record<string, BugStatusEnum>}
@@ -30,31 +30,48 @@ export const MatchType: Record<string, MatchTypeEnum>;
  * The real implementation
  */
 export class Bugzilla {
-  /**
-   * @param {BugzillaConstructorOptions} options
-   */
-  constructor(options?: BugzillaConstructorOptions);
-  origin: string;
-  apiKey: string;
-  /**
-   * @param {SearchParams} params
-   * @returns {Promise<SearchResults>}
-   */
-  search(params: SearchParams): Promise<SearchResults>;
-  /**
-   * @returns {Promise<ReadonlyArray<string>>}
-   */
-  getTeams(): Promise<ReadonlyArray<string>>;
-  /**
-   * @param {string} team
-   * @returns {Promise<{}>}
-   */
-  getComponentsForTeam(team: string): Promise<{}>;
+    /**
+     * @param {BugzillaConstructorOptions} options
+     */
+    constructor(options?: BugzillaConstructorOptions);
+    origin: string;
+    apiKey: string | undefined;
+    /**
+     * @param {SearchParams} params
+     * @returns {Promise<SearchResults>}
+     */
+    search(params: SearchParams): Promise<SearchResults>;
+    /**
+     * @param {SearchParams} params
+     * @returns {Promise<CountResults>}
+     */
+    count(params: SearchParams): Promise<CountResults>;
+    /**
+     * Here we collect the search parameters as bugzilla wants them (as opposed
+     * to the input which is as we want to specify them) but they're not
+     * formatted for transmission over the internet (urlencoded, etc). Using an
+     * array of tuples instead of an object allows repeated params
+     * @param {SearchParams} params
+     * @returns {Array<[ key: string, value: string ]>}
+     */
+    buildQuery(params: SearchParams): Array<[key: string, value: string]>;
+    /**
+     * @returns {Promise<ReadonlyArray<Team>>}
+     */
+    getTeams(): Promise<ReadonlyArray<Team>>;
+    /**
+     * @param {string} team
+     * @returns {Promise<ComponentsForTeam>}
+     */
+    getComponentsForTeam(team: string): Promise<ComponentsForTeam>;
 }
-export type BugzillaConstructorOptions = import('./bugzilla-support.js').BugzillaConstructorOptions;
-export type BugStatusEnum = import('./bugzilla-support.js').BugStatusEnum;
-export type BugFieldEnum = import('./bugzilla-support.js').BugFieldEnum;
-export type MatchTypeEnum = import('./bugzilla-support.js').MatchTypeEnum;
-export type SearchParams = import('./bugzilla-support.js').SearchParams;
-export type SearchResults = import('./bugzilla-support.js').SearchResults;
-export type Bug = import('./bugzilla-support.js').Bug;
+export type Bug = import('./bugzilla-support').Bug;
+export type BugFieldEnum = import('./bugzilla-support').BugFieldEnum;
+export type BugStatusEnum = import('./bugzilla-support').BugStatusEnum;
+export type BugzillaConstructorOptions = import('./bugzilla-support').BugzillaConstructorOptions;
+export type ComponentsForTeam = import('./bugzilla-support').ComponentsForTeam;
+export type CountResults = import('./bugzilla-support').CountResults;
+export type MatchTypeEnum = import('./bugzilla-support').MatchTypeEnum;
+export type SearchParams = import('./bugzilla-support').SearchParams;
+export type SearchResults = import('./bugzilla-support').SearchResults;
+export type Team = import('./bugzilla-support').Team;

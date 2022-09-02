@@ -2,17 +2,16 @@ import fetch from 'node-fetch';
 import { format } from 'date-fns';
 
 /**
- * bugzilla.d.ts is generated from bugzilla.js
- */
-
-/**
- * @typedef {import('./bugzilla-support.js').BugzillaConstructorOptions} BugzillaConstructorOptions
- * @typedef {import('./bugzilla-support.js').BugStatusEnum} BugStatusEnum
- * @typedef {import('./bugzilla-support.js').BugFieldEnum} BugFieldEnum
- * @typedef {import('./bugzilla-support.js').MatchTypeEnum} MatchTypeEnum
- * @typedef {import('./bugzilla-support.js').SearchParams} SearchParams
- * @typedef {import('./bugzilla-support.js').SearchResults} SearchResults
- * @typedef {import('./bugzilla-support.js').Bug} Bug
+ * @typedef {import('./bugzilla-support').Bug} Bug
+ * @typedef {import('./bugzilla-support').BugFieldEnum} BugFieldEnum
+ * @typedef {import('./bugzilla-support').BugStatusEnum} BugStatusEnum
+ * @typedef {import('./bugzilla-support').BugzillaConstructorOptions} BugzillaConstructorOptions
+ * @typedef {import('./bugzilla-support').ComponentsForTeam} ComponentsForTeam
+ * @typedef {import('./bugzilla-support').CountResults} CountResults
+ * @typedef {import('./bugzilla-support').MatchTypeEnum} MatchTypeEnum
+ * @typedef {import('./bugzilla-support').SearchParams} SearchParams
+ * @typedef {import('./bugzilla-support').SearchResults} SearchResults
+ * @typedef {import('./bugzilla-support').Team} Team
  */
 
 /**
@@ -121,17 +120,100 @@ export class Bugzilla {
    * @returns {Promise<SearchResults>}
    */
   async search(params) {
+    const bzParams = this.buildQuery(params);
+
+    const outputParams = bzParams.map(([key, value]) => {
+      return `${key}=${encodeURIComponent(value)}`;
+    });
+    const url = `${this.origin}/rest/bug?${outputParams.join('&')}`;
+    const checkUrl = `${this.origin}/buglist.cgi?${outputParams.join('&')}`;
+
+    const headers = [];
+    if (this.apiKey != null) {
+      headers.push(['X-BUGZILLA-API-KEY', this.apiKey]);
+    }
+
+    if (params.logQuery) {
+      console.log(url);
+    }
+
+    if (params.dryRun) {
+      return { bugs: [], checkUrl };
+    } else {
+      const response = await fetch(url, {
+        headers,
+      });
+
+      return {
+        bugs:
+          /** @type {SearchResults} */
+          (await response.json()).bugs,
+        checkUrl,
+      };
+    }
+  }
+
+  /**
+   * @param {SearchParams} params
+   * @returns {Promise<CountResults>}
+   */
+  async count(params) {
+    const bzParams = this.buildQuery(params);
+
+    const outputParams = bzParams.map(([key, value]) => {
+      return `${key}=${encodeURIComponent(value)}`;
+    });
+    outputParams.push('count_only=true');
+
+    const url = `${this.origin}/rest/bug?${outputParams.join('&')}`;
+    const checkUrl = `${this.origin}/buglist.cgi?${outputParams.join('&')}`;
+
+    const headers = [];
+    if (this.apiKey != null) {
+      headers.push(['X-BUGZILLA-API-KEY', this.apiKey]);
+    }
+
+    if (params.logQuery) {
+      console.log(url);
+    }
+
+    if (params.dryRun) {
+      return { bugCount: Number.POSITIVE_INFINITY, checkUrl };
+    } else {
+      const response = await fetch(url, {
+        headers,
+      });
+
+      return {
+        bugCount:
+          /** @type {{ bug_count: number }} */
+          (await response.json()).bug_count,
+        checkUrl,
+      };
+    }
+  }
+
+  /**
+   * Here we collect the search parameters as bugzilla wants them (as opposed
+   * to the input which is as we want to specify them) but they're not
+   * formatted for transmission over the internet (urlencoded, etc). Using an
+   * array of tuples instead of an object allows repeated params
+   * @param {SearchParams} params
+   * @returns {Array<[ key: string, value: string ]>}
+   */
+  buildQuery(params) {
     /**
-     * Here we collect the search parameters as bugzilla wants them (as opposed
-     * to the input which is as we want to specify them) but they're not
-     * formatted for transmission over the internet (urlencoded, etc). Using an
-     * array of tuples instead of an object allows repeated params
      * @type {Array<[ key: string, value: string ]>}
      */
     const bzParams = [];
 
     if (params.product != null) {
-      bzParams.push(['product', params.product]);
+      const products = Array.isArray(params.product)
+        ? params.product
+        : [params.product];
+      for (const product of products) {
+        bzParams.push(['product', product]);
+      }
     }
 
     if (params.components != null) {
@@ -173,38 +255,15 @@ export class Bugzilla {
       bzParams.push(['query_format', 'advanced']);
     }
 
-    const outputParams = bzParams.map(([key, value]) => {
-      return `${key}=${encodeURIComponent(value)}`;
-    });
-    const url = `${this.origin}/rest/bug?${outputParams.join('&')}`;
-    const checkUrl = `${this.origin}/buglist.cgi?${outputParams.join('&')}`;
-
-    const headers = [];
-    if (this.apiKey != null) {
-      headers.push(['X-BUGZILLA-API-KEY', this.apiKey]);
+    if (params.includeFields != null) {
+      bzParams.push(['include_fields', params.includeFields.join(', ')]);
     }
 
-    if (params.logQuery) {
-      console.log(url);
-    }
-
-    if (params.dryRun) {
-      return { bugs: [], checkUrl };
-    } else {
-      const response = await fetch(url, {
-        headers,
-      });
-
-      return {
-        // @ts-expect-error
-        bugs: (await response.json()).bugs,
-        checkUrl,
-      };
-    }
+    return bzParams;
   }
 
   /**
-   * @returns {Promise<ReadonlyArray<string>>}
+   * @returns {Promise<ReadonlyArray<Team>>}
    */
   async getTeams() {
     const url = `${this.origin}/rest/config/component_teams`;
@@ -224,7 +283,7 @@ export class Bugzilla {
 
   /**
    * @param {string} team
-   * @returns {Promise<{}>}
+   * @returns {Promise<ComponentsForTeam>}
    */
   async getComponentsForTeam(team) {
     const url = `${
@@ -240,6 +299,6 @@ export class Bugzilla {
       headers,
     });
 
-    return response.json();
+    return /** @type {Promise<ComponentsForTeam>} */ (response.json());
   }
 }

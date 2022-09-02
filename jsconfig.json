@@ -5,9 +5,12 @@
     "declarationDir": ".",
     "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": false
+    "lib": ["esnext"],
+    "module": "commonjs",
+    "noEmit": false,
+    "strict": true,
+    "target": "esnext"
   },
-  "files": [
-    "bugzilla.js"
-  ]
+  "files": ["bug-fields.js", "bugzilla.js", "component-teams.js"],
+  "exclude": ["component-teams-support.ts", "bugzilla-support.ts"]
 }
