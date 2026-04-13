@@ -1,10 +1,8 @@
 /**
  * This full list of bug fields is way too large, so we copy across the ones we
  * need.
- * @see bug-field.js
- * @type {Record<string, string>}
  */
-export const BugField = Object.freeze({
+const bugFieldValues = {
   status: 'bug_status',
   webcompatPriority: 'cf_webcompat_priority',
 
@@ -31,7 +29,7 @@ export const BugField = Object.freeze({
   blockingThunderbird30: 'cf_blocking_thunderbird30',
   blockingThunderbird31: 'cf_blocking_thunderbird31',
   blockingThunderbird32: 'cf_blocking_thunderbird32',
-  blockingThunderbird50: 'cf_blocking_thunderbird33',
+  blockingThunderbird33: 'cf_blocking_thunderbird33', // Originally blockingThunderbird50, typo?
   blocking191: 'cf_blocking_191',
   blocking192: 'cf_blocking_192',
   blocking20: 'cf_blocking_20',
@@ -105,7 +103,6 @@ export const BugField = Object.freeze({
   rootCause: 'cf_root_cause',
   seeAlso: 'see_also',
   severity: 'bug_severity',
-  // used
   statusB2GMaster: 'cf_status_b2g_master',
   statusB2Gv11hd: 'cf_status_b2g_1_1_hd',
   statusB2Gv12: 'cf_status_b2g_1_2',
@@ -754,7 +751,43 @@ export const BugField = Object.freeze({
   uxB2g: 'cf_ux_b2g',
   version: 'version',
   votes: 'votes',
-  // used
   webextensions: 'cf_blocking_webextensions',
   whiteboard: 'status_whiteboard',
-});
+} as const;
+
+export const BugField = Object.freeze(bugFieldValues);
+
+export type BugFieldName = keyof typeof bugFieldValues;
+
+export type BugFieldValue = (typeof bugFieldValues)[BugFieldName];
+
+/**
+ * Maps Bugzilla search/internal field names to their REST API response names
+ * where they differ. Fields not listed here use the same name in both contexts.
+ *
+ * The bugFieldValues above use search parameter names (needed for query params
+ * like f1/o1/v1), but the include_fields parameter expects REST response names.
+ */
+const searchToResponseName: Readonly<Record<string, string>> = {
+  bug_status: 'status',
+  status_whiteboard: 'whiteboard',
+  short_desc: 'summary',
+  bug_severity: 'severity',
+  rep_platform: 'platform',
+  bug_type: 'type',
+  bug_file_loc: 'url',
+  blocked: 'blocks',
+  dependson: 'depends_on',
+  bug_group: 'groups',
+  everconfirmed: 'is_confirmed',
+  cclist_accessible: 'is_cc_accessible',
+  reporter_accessible: 'is_reporter_accessible',
+};
+
+/**
+ * Translate a BugField search name to the corresponding REST API response name
+ * for use with include_fields.
+ */
+export function toResponseFieldName(searchName: string): string {
+  return searchToResponseName[searchName] ?? searchName;
+}

@@ -1,22 +1,27 @@
 {
   "name": "bzjs",
-  "version": "0.0.1",
-  "description": "A NodeJS interface to Bugzilla",
-  "main": "bugzilla.js",
+  "version": "0.1.0",
   "type": "module",
-  "author": "Joe Walker <jwalker@mozilla.com>",
-  "license": "UNLICENSED",
-  "dependencies": {
-    "date-fns": "^2.29.3",
-    "node-fetch": "^3.3.1",
-    "typescript": "^5.0.2"
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "oxlint",
+    "fmt": "oxfmt --write src/",
+    "prepare": "tsc"
   },
   "devDependencies": {
-    "@types/node": "^18.15.3",
-    "eslint": "^8.36.0",
-    "prettier": "^2.8.5"
-  },
-  "scripts": {
-    "prepublish": "tsc -p ./jsconfig.json"
+    "oxfmt": "latest",
+    "oxlint": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
   }
 }

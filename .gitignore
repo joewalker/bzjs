@@ -1,2 +1,17 @@
 
-**/node_modules/
+.DS_Store
+*.swp
+*.tmp
+.*.gz
+npm-debug.log
+yarn.lock
+tsconfig.tsbuildinfo
+
+node_modules/
+dist/
+
+/.claude/settings.local.json
+/.idea/workspace.xml
+
+/ignore/
+/IGNORE.md
