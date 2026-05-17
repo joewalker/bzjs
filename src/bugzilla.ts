@@ -170,6 +170,10 @@ export class Bugzilla {
       appendRepeatedQueryParams(queryParams, 'component', params.components);
     }
 
+    if (params.ids != null) {
+      appendRepeatedQueryParams(queryParams, 'id', params.ids.map(String));
+    }
+
     if (params.bugStatus != null) {
       appendRepeatedQueryParams(queryParams, 'bug_status', params.bugStatus);
     }
@@ -248,6 +252,10 @@ export class Bugzilla {
 
     if (params.components != null) {
       appendRepeatedQueryParams(queryParams, 'component', params.components);
+    }
+
+    if (params.ids != null) {
+      appendRepeatedQueryParams(queryParams, 'id', params.ids.map(String));
     }
 
     if (params.bugStatus != null) {

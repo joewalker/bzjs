@@ -38,6 +38,11 @@ export interface SearchParams extends QueryParams {
   readonly components?: ReadonlyArray<string>;
 
   /**
+   * Match specific bug IDs. Repeated `id=N` params; OR match.
+   */
+  readonly ids?: ReadonlyArray<number>;
+
+  /**
    * This is an 'OR' criteria so any of these keywords must match
    */
   readonly bugStatus?: ReadonlyArray<BugStatusEnum>;
