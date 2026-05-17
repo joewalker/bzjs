@@ -3,8 +3,8 @@
 Authenticate:
 
 ```sh
-npm login
-npm whoami
+pnpm login
+pnpm whoami
 ```
 
 Before publishing, update the package version in `package.json`, then run:

@@ -82,5 +82,5 @@ pnpm install
 pnpm build       # compile TypeScript to dist/
 pnpm test        # run tests
 pnpm lint        # oxlint
-pnpm fmt         # oxfmt
+pnpm format      # oxfmt
 ```

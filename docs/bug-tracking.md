@@ -1,6 +1,6 @@
 # Bug Tracking
 
-We track bugs as issues in this [project's GitHab repository](https://github.com/joewalker/bzjs/issues).
+We track bugs as issues in this [project's GitHub repository](https://github.com/joewalker/bzjs/issues).
 
 ## Severity levels
 
