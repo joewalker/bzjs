@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { toResponseFieldName } from '../bug-fields.js';
 import {
   BugField,
@@ -13,7 +15,6 @@ import {
   Product,
   Type,
 } from '../bugzilla.js';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Parse the query string from a URL into an array of [key, value] tuples.
@@ -272,9 +273,7 @@ describe('Bugzilla', () => {
       const result = await bz.search({ product: 'Core' });
 
       expect(result.bugs).toEqual([{ id: 1 }]);
-      expect(result.checkUrl).toBe(
-        'https://bz.test/buglist.cgi?product=Core',
-      );
+      expect(result.checkUrl).toBe('https://bz.test/buglist.cgi?product=Core');
     });
 
     it('should omit params that are not set', async () => {

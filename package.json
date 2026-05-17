@@ -1,27 +1,52 @@
 {
   "name": "bzjs",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "description": "A TypeScript client for the Bugzilla REST API, focused on Mozilla's bugzilla.mozilla.org.",
+  "author": "Joe Walker <jwalker@mozilla.com>",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/joewalker/bzjs#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joewalker/bzjs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joewalker/bzjs/issues"
+  },
+  "keywords": [
+    "bugzilla"
+  ],
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsc",
-    "test": "vitest run",
+    "build": "rm -rf dist cache/tsconfig.build.tsbuildinfo && tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist cache/tsconfig.build.tsbuildinfo",
+    "format": "oxfmt",
     "lint": "oxlint",
-    "fmt": "oxfmt --write src/",
-    "prepare": "tsc"
+    "prepack": "pnpm build",
+    "test:watch": "NODE_ENV=test vitest",
+    "test": "NODE_ENV=test vitest run",
+    "tsc": "tsc -p ."
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "4.1.6",
+    "nyc": "18.0.0",
     "oxfmt": "latest",
     "oxlint": "latest",
     "typescript": "latest",
+    "v8-to-istanbul": "9.3.0",
     "vitest": "latest"
-  }
+  },
+  "packageManager": "pnpm@11.1.2"
 }

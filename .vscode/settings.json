@@ -1,0 +1,55 @@
+{
+  "cSpell.customDictionaries": {
+     "project-words": {
+      "name": "project-words",
+      "path": "${workspaceRoot}/.vscode/custom.dict",
+      "description": "Words used in this project",
+      "addWords": true
+    },
+    "custom": true,
+    "internal-terms": false,
+  },
+
+  "deno.enable": false,
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
+  "editor.rulers": [ 80 ],
+  "editor.tabSize": 2,
+
+  "files.exclude": {
+    ".idea": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "dist": true
+  },
+  "files.trimTrailingWhitespace": true,
+  "files.trimFinalNewlines": true,
+
+  "npm.packageManager": "pnpm",
+
+  "search.exclude": {
+    "**/dist": true,
+    "**/node_modules/**": true,
+    "**/package-lock.json": true,
+    "**/pnpm-lock.yaml": true,
+    "cache/**": true,
+    "ignore/**": true,
+  },
+
+  "vitest.runtime": "node",
+
+  "[js/ts]": {
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true,
+  },
+  "js/ts.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": true,
+  "js/ts.preferences.importModuleSpecifier": "non-relative",
+  "js/ts.preferences.importModuleSpecifierEnding": "js",
+  "js/ts.preferences.quoteStyle": "single",
+  "js/ts.preferences.preferTypeOnlyAutoImports": true,
+
+  "[markdown]": {
+    "editor.wordWrap": "bounded",
+    "editor.wordWrapColumn": 80
+  },
+}

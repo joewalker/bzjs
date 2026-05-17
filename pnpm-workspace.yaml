@@ -1,0 +1,4 @@
+autoInstallPeers: true
+ignoreWorkspaceRootCheck: true
+saveExact: true
+verifyDepsBeforeRun: error

@@ -1,17 +1,14 @@
 
 .DS_Store
-*.swp
-*.tmp
-.*.gz
-npm-debug.log
-yarn.lock
 tsconfig.tsbuildinfo
 
 node_modules/
 dist/
 
+/.claude/worktrees
 /.claude/settings.local.json
-/.idea/workspace.xml
 
+/cache/
 /ignore/
 /IGNORE.md
+/WIP.md

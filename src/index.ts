@@ -32,10 +32,7 @@ export type {
   SearchParams,
   SearchResult,
 } from './bugzilla-types.js';
-export type {
-  BugFieldName,
-  BugFieldValue,
-} from './bug-fields.js';
+export type { BugFieldName, BugFieldValue } from './bug-fields.js';
 export type {
   BugStatusEnum,
   CFQAWhiteboardValue,

@@ -1,16 +1,25 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "declaration": true,
-    "declarationMap": true,
+    "composite": true,
+    "erasableSyntaxOnly": true,
+    "exactOptionalPropertyTypes": true,
+    "lib": ["esnext", "dom"],
+    "module": "NodeNext",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "outDir": "./dist",
+    "paths": {
+      "bzjs/*": ["./src/*"]
+    },
+    "resolveJsonModule": true,
+    "rootDir": "./src",
+    "skipLibCheck": true,
     "sourceMap": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "strict": true,
-    "skipLibCheck": true
+    "target": "es2022",
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
+    "verbatimModuleSyntax": true
   },
-  "include": ["src"],
-  "exclude": ["src/__test__"]
+  "include": ["./src/**/*"]
 }

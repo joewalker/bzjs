@@ -65,7 +65,11 @@ Use field/matchType/value tuples for advanced queries:
 ```ts
 const { bugs } = await bz.search({
   advanced: [
-    { field: 'cf_status_firefox120', matchType: MatchType.equals, value: 'affected' },
+    {
+      field: 'cf_status_firefox120',
+      matchType: MatchType.equals,
+      value: 'affected',
+    },
     { field: 'priority', matchType: MatchType.anyexact, value: 'P1' },
   ],
 });
