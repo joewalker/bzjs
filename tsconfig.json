@@ -10,9 +10,6 @@
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": true,
     "outDir": "./dist",
-    "paths": {
-      "bzjs/*": ["./src/*"]
-    },
     "resolveJsonModule": true,
     "rootDir": "./src",
     "skipLibCheck": true,

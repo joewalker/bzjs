@@ -1,5 +1,5 @@
 {
-  "name": "bzjs",
+  "name": "@joewalker/bzjs",
   "version": "0.2.0",
   "description": "A TypeScript client for the Bugzilla REST API, focused on Mozilla's bugzilla.mozilla.org.",
   "author": "Joe Walker <jwalker@mozilla.com>",
@@ -48,5 +48,8 @@
     "v8-to-istanbul": "9.3.0",
     "vitest": "latest"
   },
-  "packageManager": "pnpm@11.1.2"
+  "packageManager": "pnpm@11.1.2",
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -1,4 +1,4 @@
-# bzjs
+# @joewalker/bzjs
 
 A TypeScript client for the [Bugzilla REST API](https://wiki.mozilla.org/Bugzilla:REST_API), focused on Mozilla's bugzilla.mozilla.org.
 
@@ -7,13 +7,13 @@ Zero runtime dependencies. Works anywhere with a native `fetch` (Node 18+, Deno,
 ## Install
 
 ```sh
-pnpm add github:joewalker/bzjs#COMMIT_HASH
+pnpm add @joewalker/bzjs
 ```
 
 ## Usage
 
 ```ts
-import { Bugzilla, BugStatus, MatchType } from 'bzjs';
+import { Bugzilla, BugStatus, MatchType } from '@joewalker/bzjs';
 
 const bz = new Bugzilla(); // defaults to bugzilla.mozilla.org
 // or: new Bugzilla({ origin: 'https://bz.example.com', apiKey: '...' })
