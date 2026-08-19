@@ -189,7 +189,8 @@ Comments use a fail-closed trust policy because public Bugzilla comments may con
 
 - `--comments auto`, the default, includes comments only when the bug has a non-empty `groups` array.
 - `--comments none` never includes comment bodies.
-- `--comments all` explicitly includes public or unclassified comments and adds a warning to the document.
+
+The normal CLI build does not provide an option to include public or unclassified comment bodies.
 
 Comment 0, the initial description, follows the same policy. Missing group information is treated as untrusted. Free-form metadata such as summaries is always identified as potentially user-supplied.
 

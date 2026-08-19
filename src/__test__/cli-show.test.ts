@@ -1,4 +1,5 @@
 import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -22,7 +23,7 @@ let temporaryDirectory: string;
 
 beforeEach(async () => {
   await mkdir('cache/tmp', { recursive: true });
-  temporaryDirectory = await mkdtemp('cache/tmp/cli-show-');
+  temporaryDirectory = await mkdtemp(resolve('cache/tmp/cli-show-'));
 });
 
 afterEach(async () => {
@@ -136,6 +137,13 @@ describe('parseShowArguments', () => {
       referencesMode: 'known',
       verbosity: 'normal',
     });
+  });
+
+  it('does not expose the unsafe all-comments override', () => {
+    expect(() => parseShowArguments(['123', '--comments=all'])).toThrow(
+      'comments must be one of: auto, none',
+    );
+    expect(showHelp).toContain('--comments MODE            auto or none');
   });
 
   it('parses all options and compact defaults', () => {

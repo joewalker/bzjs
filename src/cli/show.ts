@@ -62,6 +62,18 @@ const showOptions = {
   verbosity: { type: 'string' },
 } as const;
 
+// This must remain a source-level switch so untrusted comments cannot be
+// enabled by a command-line option or environment variable.
+const enableUnsafeCommentsMode = false;
+// istanbul ignore next
+const commentsModes: ReadonlyArray<CommentsMode> = enableUnsafeCommentsMode
+  ? ['auto', 'none', 'all']
+  : ['auto', 'none'];
+// istanbul ignore next
+const commentsModeHelp = enableUnsafeCommentsMode
+  ? 'auto, none, or all'
+  : 'auto or none';
+
 const knownReferenceHosts = new Set([
   'bugzilla.mozilla.org',
   'cve.org',
@@ -130,7 +142,7 @@ export function parseShowArguments(
   );
   const commentsMode = parseChoice(
     values.comments,
-    ['auto', 'none', 'all'],
+    commentsModes,
     'comments',
     'auto',
   );
@@ -532,7 +544,7 @@ export const showHelp = `Usage:
 
 Options:
   --verbosity LEVEL          compact, normal, or full
-  --comments MODE            auto, none, or all; defaults to auto
+  --comments MODE            ${commentsModeHelp}; defaults to auto
   --references MODE          none, known, or all; defaults to known
   --max-comments NUMBER      Maximum included comment bodies
   --max-comment-chars NUMBER Maximum characters per included comment
