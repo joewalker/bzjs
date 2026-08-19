@@ -86,7 +86,7 @@ function parseDotEnvValue(source: string): string {
         r: '\r',
         t: '\t',
       };
-      return replacements[escaped] ?? escaped;
+      return replacements[escaped as keyof typeof replacements];
     });
   }
 

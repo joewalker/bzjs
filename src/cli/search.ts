@@ -283,6 +283,7 @@ function parseDate(value: string, name: string): Date {
  * Narrow a value after an all-or-none option group has been validated.
  */
 function requiredValue(value: string | undefined): string {
+  // istanbul ignore if
   if (value == null) {
     throw new Error('missing required value');
   }

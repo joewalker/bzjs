@@ -39,4 +39,26 @@ describe('formatCliError', () => {
     expect(output).toContain('An API key was configured');
     expect(output).toContain('account may not have permission');
   });
+
+  it('formats ordinary errors and thrown primitive values without auth help', () => {
+    expect(formatCliError('bz-show', new Error('broken'))).toBe(
+      'bz-show: broken\n',
+    );
+    expect(formatCliError('bz-search', 'broken')).toBe('bz-search: broken\n');
+  });
+
+  it('does not add auth help for other Bugzilla statuses', () => {
+    const output = formatCliError(
+      'bz-show',
+      new BugzillaApiError(404, 'Not found'),
+      {
+        apiKeyConfigured: false,
+        localConfigFile: '/work/project/.env',
+        origin: 'https://bugzilla.mozilla.org/',
+        userConfigFile: '/home/example/.config/bzjs/config.env',
+      },
+    );
+
+    expect(output).toBe('bz-show: Not found\n');
+  });
 });

@@ -126,6 +126,22 @@ describe('Bugzilla', () => {
       const bz = new Bugzilla({ origin: 'https://bz.test' });
       await expect(bz.getBug(1)).rejects.toThrow('Found 2 bugs matching 1');
     });
+
+    it('should reject a malformed single null bug', async () => {
+      mockFetch({ bugs: [null] });
+
+      const bz = new Bugzilla({ origin: 'https://bz.test' });
+      await expect(bz.getBug(1)).rejects.toThrow('Found 1 bugs matching 1');
+    });
+
+    it('should omit empty field selections and exclusions', async () => {
+      mockFetch({ bugs: [{ id: 1 }] });
+
+      const bz = new Bugzilla({ origin: 'https://bz.test' });
+      await bz.getBug(1, { bugFields: [], excludeFields: [] });
+
+      expect(parseQuery(fetchedUrl())).toEqual([]);
+    });
   });
 
   describe('comments', () => {
@@ -367,6 +383,41 @@ describe('Bugzilla', () => {
         ['id', '2'],
       ]);
     });
+
+    it('should support all search filters', async () => {
+      mockFetch({ bug_count: 1 });
+
+      const bz = new Bugzilla({ origin: 'https://bz.test' });
+      await bz.count({
+        advanced: [
+          { field: 'priority', matchType: MatchType.equals, value: 'P1' },
+        ],
+        assignedTo: 'dev@example.com',
+        bugSeverity: ['S1'],
+        bugStatus: [BugStatus.new],
+        change: {
+          field: 'bug_status',
+          from: new Date('2026-01-01'),
+          to: new Date('2026-02-01'),
+          value: 'RESOLVED',
+        },
+        components: ['DOM'],
+        keywords: ['perf'],
+      });
+
+      const params = parseQuery(fetchedUrl());
+      expect(params).toEqual(
+        expect.arrayContaining([
+          ['component', 'DOM'],
+          ['bug_status', 'NEW'],
+          ['keywords', 'perf'],
+          ['email1', 'dev@example.com'],
+          ['chfieldfrom', '2026-01-01'],
+          ['f1', 'priority'],
+          ['bug_severity', 'S1'],
+        ]),
+      );
+    });
   });
 
   describe('getTeams', () => {
@@ -378,6 +429,18 @@ describe('Bugzilla', () => {
 
       expect(fetchedUrl()).toBe('https://bz.test/rest/config/component_teams?');
       expect(result).toEqual(['team-a', 'team-b']);
+    });
+
+    it('should log the query when requested', async () => {
+      mockFetch([]);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const bz = new Bugzilla({ origin: 'https://bz.test' });
+      await bz.getTeams(true);
+
+      expect(log).toHaveBeenCalledWith(
+        'https://bz.test/rest/config/component_teams?',
+      );
     });
   });
 
@@ -481,6 +544,43 @@ describe('Bugzilla', () => {
       await expect(bz.attachments(42)).rejects.toThrow(
         'Bugzilla API error 403: You are not authorized to access bug #42.',
       );
+    });
+
+    it('uses only the status when an error response has no message', async () => {
+      mockFetchError(500, { error: true });
+
+      const bz = new Bugzilla({ origin: 'https://bz.test' });
+      await expect(bz.getTeams()).rejects.toThrow('Bugzilla API error 500');
+    });
+
+    it('uses only the status when a non-JSON error response is empty', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 503,
+          text: () => Promise.resolve(''),
+        }),
+      );
+
+      const bz = new Bugzilla({ origin: 'https://bz.test' });
+      await expect(bz.getTeams()).rejects.toThrow('Bugzilla API error 503');
+    });
+
+    it('logs and rethrows malformed successful JSON', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          text: () => Promise.resolve('not-json'),
+        }),
+      );
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const bz = new Bugzilla({ origin: 'https://bz.test' });
+      await expect(bz.getTeams()).rejects.toBeInstanceOf(SyntaxError);
+      expect(error).toHaveBeenCalledWith('not-json');
     });
   });
 });

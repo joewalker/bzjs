@@ -114,7 +114,7 @@ export function parseShowArguments(
       verbosity: 'normal',
     };
   }
-  if (positionals.length !== 1 || !/^\d+$/u.test(positionals[0] ?? '')) {
+  if (positionals.length !== 1 || !/^\d+$/u.test(positionals[0])) {
     throw new Error('exactly one numeric bug ID is required');
   }
 

@@ -19,7 +19,7 @@ export function fencedText(value: string): string {
   const fence = '`'.repeat(Math.max(3, longestRun + 1));
   const sanitized = [...value]
     .filter(character => {
-      const codePoint = character.codePointAt(0) ?? 0;
+      const codePoint = character.codePointAt(0) as number;
       return (
         codePoint >= 32 ||
         character === '\n' ||
