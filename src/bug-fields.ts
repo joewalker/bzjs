@@ -3,6 +3,7 @@
  * need.
  */
 const bugFieldValues = {
+  id: 'id',
   status: 'bug_status',
   webcompatPriority: 'cf_webcompat_priority',
 
@@ -69,6 +70,7 @@ const bugFieldValues = {
   installUpdateWorkflow: 'cf_install_update_workflow',
   iteration: 'cf_fx_iteration',
   keywords: 'keywords',
+  lastChangeTime: 'last_change_time',
   lastVisit: 'last_visit_ts',
   locale: 'cf_locale',
   machineState: 'cf_machine_state',

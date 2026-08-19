@@ -68,6 +68,32 @@ function appendBugFieldSelection(
 }
 
 /**
+ * Append fields that should be omitted from an API response.
+ */
+function appendFieldExclusion(
+  queryParams: Array<QueryParam>,
+  excludeFields: ReadonlyArray<string> | undefined,
+): void {
+  if (excludeFields == null || excludeFields.length === 0) {
+    return;
+  }
+
+  queryParams.push(createQueryParam('exclude_fields', excludeFields.join(',')));
+}
+
+/** An HTTP error returned by the Bugzilla REST API. */
+export class BugzillaApiError extends Error {
+  readonly status: number;
+
+  /** Create an error with the response status and user-facing message. */
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'BugzillaApiError';
+    this.status = status;
+  }
+}
+
+/**
  * The real implementation
  */
 export class Bugzilla {
@@ -95,6 +121,7 @@ export class Bugzilla {
   async getBug(id: number, options: QueryParams = {}): Promise<Partial<Bug>> {
     const queryParams: Array<QueryParam> = [];
     appendBugFieldSelection(queryParams, options.bugFields);
+    appendFieldExclusion(queryParams, options.excludeFields);
 
     const reply = await this.#query<BugReply<Bug | Partial<Bug>>>(
       `/rest/bug/${id}`,
@@ -121,9 +148,11 @@ export class Bugzilla {
     id: number,
     options: QueryParams = {},
   ): Promise<BugCommentsReply> {
+    const queryParams: Array<QueryParam> = [];
+    appendFieldExclusion(queryParams, options.excludeFields);
     return this.#query<BugCommentsReply>(
       `/rest/bug/${id}/comment`,
-      [],
+      queryParams,
       options.logQuery,
     );
   }
@@ -135,9 +164,11 @@ export class Bugzilla {
     id: number,
     options: QueryParams = {},
   ): Promise<AttachmentReply> {
+    const queryParams: Array<QueryParam> = [];
+    appendFieldExclusion(queryParams, options.excludeFields);
     return this.#query<AttachmentReply>(
       `/rest/bug/${id}/attachment`,
-      [],
+      queryParams,
       options.logQuery,
     );
   }
@@ -165,6 +196,7 @@ export class Bugzilla {
     }
 
     appendBugFieldSelection(queryParams, params.bugFields);
+    appendFieldExclusion(queryParams, params.excludeFields);
 
     if (params.components != null) {
       appendRepeatedQueryParams(queryParams, 'component', params.components);
@@ -223,6 +255,14 @@ export class Bugzilla {
         'bug_severity',
         params.bugSeverity,
       );
+    }
+
+    if (params.limit != null) {
+      queryParams.push(createQueryParam('limit', String(params.limit)));
+    }
+
+    if (params.offset != null) {
+      queryParams.push(createQueryParam('offset', String(params.offset)));
     }
 
     const checkUrl = this.#checkUrl(queryParams);
@@ -404,7 +444,7 @@ export class Bugzilla {
           message += `: ${text}`;
         }
       }
-      throw new Error(message);
+      throw new BugzillaApiError(response.status, message);
     }
 
     try {

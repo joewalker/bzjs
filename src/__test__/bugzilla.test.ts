@@ -5,6 +5,7 @@ import {
   BugField,
   BugStatus,
   Bugzilla,
+  BugzillaApiError,
   CF,
   CFQAWhiteboard,
   CFStatus,
@@ -25,7 +26,9 @@ function parseQuery(url: string): Array<[string, string]> {
   return [...query.entries()];
 }
 
-/** Return a mock fetch that resolves with the given JSON body. */
+/**
+ * Return a mock fetch that resolves with the given JSON body.
+ */
 function mockFetch(body: unknown): void {
   vi.stubGlobal(
     'fetch',
@@ -37,7 +40,9 @@ function mockFetch(body: unknown): void {
   );
 }
 
-/** Return a mock fetch that resolves with an HTTP error status. */
+/**
+ * Return a mock fetch that resolves with an HTTP error status.
+ */
 function mockFetchError(status: number, body: unknown): void {
   vi.stubGlobal(
     'fetch',
@@ -49,13 +54,17 @@ function mockFetchError(status: number, body: unknown): void {
   );
 }
 
-/** Extract the URL string passed to the mocked fetch. */
+/**
+ * Extract the URL string passed to the mocked fetch.
+ */
 function fetchedUrl(): string {
   const call = vi.mocked(fetch).mock.calls[0];
   return call[0] as string;
 }
 
-/** Extract the headers passed to the mocked fetch. */
+/**
+ * Extract the headers passed to the mocked fetch.
+ */
 function fetchedHeaders(): Record<string, string> {
   const call = vi.mocked(fetch).mock.calls[0];
   return (call[1] as { headers: Record<string, string> }).headers;
@@ -142,6 +151,16 @@ describe('Bugzilla', () => {
 
       expect(fetchedUrl()).toBe('https://bz.test/rest/bug/42/attachment?');
       expect(result).toEqual(reply);
+    });
+
+    it('should exclude requested attachment fields', async () => {
+      const bz = new Bugzilla({ origin: 'https://bz.test' });
+      await bz.attachments(42, { excludeFields: ['data'] });
+
+      expect(parseQuery(fetchedUrl())).toContainEqual([
+        'exclude_fields',
+        'data',
+      ]);
     });
   });
 
@@ -259,6 +278,15 @@ describe('Bugzilla', () => {
         ['id', '1'],
         ['id', '2'],
       ]);
+    });
+
+    it('should include limit and offset params', async () => {
+      const bz = new Bugzilla({ origin: 'https://bz.test' });
+      await bz.search({ limit: 25, offset: 50 });
+
+      const params = parseQuery(fetchedUrl());
+      expect(params).toContainEqual(['limit', '25']);
+      expect(params).toContainEqual(['offset', '50']);
     });
 
     it('should include bugFields as include_fields with response names', async () => {
@@ -392,6 +420,19 @@ describe('Bugzilla', () => {
   });
 
   describe('HTTP error handling', () => {
+    it('throws a structured error with the HTTP status', async () => {
+      mockFetchError(401, {
+        error: true,
+        message: 'Authentication required.',
+      });
+
+      const bz = new Bugzilla({ origin: 'https://bz.test' });
+      const error = await bz.getBug(1).catch((reason: unknown) => reason);
+
+      expect(error).toBeInstanceOf(BugzillaApiError);
+      expect(error).toMatchObject({ status: 401 });
+    });
+
     it('should throw on 404 with Bugzilla error message', async () => {
       mockFetchError(404, {
         error: true,

@@ -16,6 +16,7 @@
     "sourceMap": true,
     "target": "es2022",
     "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
+    "types": ["node"],
     "verbatimModuleSyntax": true
   },
   "include": ["./src/**/*"]

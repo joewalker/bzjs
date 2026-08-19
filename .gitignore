@@ -12,3 +12,4 @@ dist/
 /ignore/
 /IGNORE.md
 /WIP.md
+.env

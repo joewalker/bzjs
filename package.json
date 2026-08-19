@@ -16,6 +16,11 @@
     "bugzilla"
   ],
   "type": "module",
+  "bin": {
+    "bz-search": "./dist/bin/bz-search.js",
+    "bz-show": "./dist/bin/bz-show.js",
+    "bzjs": "./dist/bin/bzjs.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -40,16 +45,17 @@
     "tsc": "tsc -p ."
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "4.1.6",
+    "@types/node": "26.2.0",
+    "@vitest/coverage-v8": "4.1.10",
     "nyc": "18.0.0",
-    "oxfmt": "latest",
-    "oxlint": "latest",
-    "typescript": "latest",
+    "oxfmt": "0.64.0",
+    "oxlint": "1.79.0",
+    "typescript": "7.0.2",
     "v8-to-istanbul": "9.3.0",
-    "vitest": "latest"
+    "vitest": "4.1.10"
   },
-  "packageManager": "pnpm@11.1.2",
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "packageManager": "pnpm@11.22.0+sha512.1ff870c4c6133dfd88fb2afc46dd13d47f09c9794b438c6fdb47ca98caf3bc16381ee0be93a091b8e3824cf01f889f46d7d9e20910fb0be1ab0fb5baa80dd621"
 }

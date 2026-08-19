@@ -21,6 +21,12 @@ export interface QueryParams {
    * Only fetch a subset of the available bug fields from bug endpoints.
    */
   readonly bugFields?: ReadonlyArray<BugFieldValue>;
+
+  /**
+   * Omit fields from the response. This is especially useful for excluding
+   * base64 attachment data when only metadata is required.
+   */
+  readonly excludeFields?: ReadonlyArray<string>;
 }
 
 /**
@@ -87,17 +93,31 @@ export interface SearchParams extends QueryParams {
    * S1, S2, S3, etc
    */
   readonly bugSeverity?: ReadonlyArray<string>;
+
+  /**
+   * Maximum number of bugs to return. Zero asks Bugzilla for all matches.
+   */
+  readonly limit?: number;
+
+  /**
+   * Number of matching bugs to skip before returning results.
+   */
+  readonly offset?: number;
 }
 
 export interface SearchResult<TBug = Bug> {
   readonly bugs: ReadonlyArray<TBug>;
-  /** Equivalent buglist.cgi URL for viewing in a browser. */
+  /**
+   * Equivalent buglist.cgi URL for viewing in a browser.
+   */
   readonly checkUrl: string;
 }
 
 export interface CountResult {
   readonly bugCount: number;
-  /** Equivalent buglist.cgi URL for viewing in a browser. */
+  /**
+   * Equivalent buglist.cgi URL for viewing in a browser.
+   */
   readonly checkUrl: string;
 }
 
@@ -144,16 +164,26 @@ export interface Bug {
   readonly assigned_to: string;
   readonly whiteboard: string;
   readonly blocks?: ReadonlyArray<number>;
+  readonly cc?: ReadonlyArray<string>;
   readonly creation_time?: IsoDateString;
   readonly creator?: string;
   readonly creator_detail?: Detail;
   readonly depends_on?: ReadonlyArray<number>;
   readonly flags?: ReadonlyArray<Flag>;
+  readonly groups?: ReadonlyArray<string>;
+  readonly is_open?: boolean;
   readonly keywords?: ReadonlyArray<string>;
   readonly last_change_time?: IsoDateString;
+  readonly op_sys?: string;
+  readonly platform?: string;
+  readonly priority?: string;
+  readonly qa_contact?: string;
   readonly resolution?: string;
   readonly see_also?: ReadonlyArray<string>;
+  readonly target_milestone?: string;
+  readonly type?: string;
   readonly url?: string;
+  readonly version?: string;
   readonly [key: string]: unknown;
 }
 

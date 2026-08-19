@@ -1,4 +1,4 @@
-export { Bugzilla } from './bugzilla.js';
+export { Bugzilla, BugzillaApiError } from './bugzilla.js';
 export { BugField, toResponseFieldName } from './bug-fields.js';
 export {
   BugStatus,
