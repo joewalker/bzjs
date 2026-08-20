@@ -1,6 +1,6 @@
 {
   "name": "@joewalker/bzjs",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A TypeScript client for the Bugzilla REST API, focused on Mozilla's bugzilla.mozilla.org.",
   "author": "Joe Walker <jwalker@mozilla.com>",
   "license": "Apache-2.0",
