@@ -17,6 +17,7 @@
   ],
   "type": "module",
   "bin": {
+    "bz-help": "./dist/bin/bz-help.js",
     "bz-search": "./dist/bin/bz-search.js",
     "bz-show": "./dist/bin/bz-show.js",
     "bzjs": "./dist/bin/bzjs.js"

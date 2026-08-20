@@ -91,7 +91,7 @@ Non-successful HTTP responses reject with `BugzillaApiError`. Its `status` prope
 
 ## Command-line tools
 
-The package installs `bz-search` and `bz-show`. It also installs a `bzjs` dispatcher so the commands are convenient to run directly from npm. The CLI requires Node 18.3 or newer.
+The package installs `bz-help`, `bz-search`, and `bz-show`. It also installs a `bzjs` dispatcher so the commands are convenient to run directly from npm. The CLI requires Node 18.3 or newer.
 
 ```sh
 # Run without a permanent installation
@@ -137,7 +137,7 @@ chmod 600 ~/.config/bzjs/config.env
 
 For project-specific configuration, place the same setting in `.env` in the current working directory. This means the directory from which `bz-search` or `bz-show` is invoked, not the installed package directory.
 
-The spelling `BUGZILLA-API-KEY` is also accepted in `.env` files. For a shell environment variable, use the underscore spelling:
+Prefer the conventional underscore spelling, `BUGZILLA_API_KEY`. The spelling `BUGZILLA-API-KEY` is also accepted in the process environment and `.env` files for compatibility. For a shell environment variable, use the underscore spelling:
 
 ```sh
 export BUGZILLA_API_KEY=your-api-key
@@ -153,6 +153,10 @@ Configuration precedence is:
 An explicit `--env-file` replaces both automatically discovered files. API keys are sent only in the `X-BUGZILLA-API-KEY` request header and are never included in command output or query URLs. Do not commit `.env` files.
 
 Use `BUGZILLA_ORIGIN` or `--origin` for another Bugzilla installation.
+
+### bz-help
+
+`bz-help` prints the complete option reference for both `bz-show` and `bz-search`, with the shared credentials section shown once. It is equivalent to `bzjs help` and is intended as an easy way to give an LLM an overview of the command-line package.
 
 ### bz-search
 
@@ -196,7 +200,7 @@ Comment 0, the initial description, follows the same policy. Missing group infor
 
 The default `--references known` mode extracts canonical Phabricator revisions and links to recognized development sites from redacted comments without including the surrounding prose or fetching the targets. Use `--references none` to disable extraction or `--references all` to retain all HTTP references.
 
-Use `--verbosity compact|normal|full`, `--max-comments`, and `--max-comment-chars` to bound the document. Run either command with `--help` for the complete option list.
+Use `--verbosity compact|normal|full`, `--max-comments`, and `--max-comment-chars` to bound the document. Run either command with `--help` for its complete option list, or run `bzjs help` for both command references in one LLM-friendly document.
 
 ## Development
 

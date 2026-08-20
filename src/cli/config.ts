@@ -6,6 +6,22 @@ import type { BugzillaConstructorOptions } from '../bugzilla-types.js';
 
 type Environment = Readonly<Record<string, string | undefined>>;
 
+export const credentialsHelp = `\
+Access to public bugs does not require an API key. \
+Access to restricted bugs does. \
+Credentials are read from the process environment, \
+./.env file in the current directory, \
+or the per-user configuration at $XDG_CONFIG_HOME/bzjs/config.env \
+(normally ~/.config/bzjs/config.env).
+
+To access all bugs visible to your account, \
+sign in and create or manage an API key here:
+  https://bugzilla.mozilla.org/userprefs.cgi?tab=apikey
+
+Install the key by adding this line to the per-user configuration file:
+  BUGZILLA_API_KEY=your-api-key
+`;
+
 /** Return the per-user configuration path for the current platform. */
 export function userConfigFilePath(
   environment: Environment,

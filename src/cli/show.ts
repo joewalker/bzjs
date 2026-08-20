@@ -12,6 +12,7 @@ import type {
 } from '../bugzilla-types.js';
 import { Bugzilla } from '../bugzilla.js';
 import {
+  credentialsHelp,
   loadBugzillaDotEnv,
   resolveBugzillaConfiguration,
   userConfigFilePath,
@@ -538,7 +539,7 @@ function truncateComment(text: string, limit: number): string {
   return `${text.slice(0, limit)}\n\n[Comment truncated after ${limit} characters]`;
 }
 
-export const showHelp = `Usage:
+export const showCommandHelp = `Usage:
   bz-show BUG_ID [options]
   bzjs show BUG_ID [options]
 
@@ -553,13 +554,11 @@ Options:
   -o, --output FILE          Write Markdown to a file instead of stdout
   -h, --help                 Show this help
 
-In auto mode, comments are included only when the bug has a non-empty groups
+In auto mode, comments are included only when the bug has a non-empty groups\
 array. Public and unclassified bug comments are redacted.
-
-Credentials are read from the process environment, ./.env, or the per-user
-configuration at $XDG_CONFIG_HOME/bzjs/config.env (normally
-~/.config/bzjs/config.env).
 `;
+
+export const showHelp = `${showCommandHelp}\n${credentialsHelp}`;
 
 /**
  * Run bz-show and return a process exit code.

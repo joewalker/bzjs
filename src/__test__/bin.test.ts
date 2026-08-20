@@ -1,8 +1,13 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const commandMocks = vi.hoisted(() => ({
+  help: 'combined command help\n',
   runSearchCommand: vi.fn().mockResolvedValue(10),
   runShowCommand: vi.fn().mockResolvedValue(20),
+}));
+
+vi.mock('../cli/help.js', () => ({
+  help: commandMocks.help,
 }));
 
 vi.mock('../cli/search.js', () => ({
@@ -28,6 +33,16 @@ afterAll(() => {
 });
 
 describe('standalone entry points', () => {
+  it('prints the combined help from bz-help', async () => {
+    process.argv = ['node', 'bz-help'];
+    const stdout = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+
+    await import('../bin/bz-help.js');
+
+    expect(stdout).toHaveBeenCalledWith(commandMocks.help);
+    expect(process.exitCode).toBe(0);
+  });
+
   it('dispatches bz-search arguments', async () => {
     process.argv = ['node', 'bz-search', 'summary', '--limit', '1'];
 
@@ -81,6 +96,18 @@ describe('bzjs dispatcher', () => {
 
     expect(commandMocks.runShowCommand).toHaveBeenCalledWith(['123']);
     expect(process.exitCode).toBe(20);
+  });
+
+  it('prints the combined command help', async () => {
+    process.argv = ['node', 'bzjs', 'help'];
+    const stdout = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+
+    await import('../bin/bzjs.js');
+
+    expect(stdout).toHaveBeenCalledWith(commandMocks.help);
+    expect(commandMocks.runSearchCommand).not.toHaveBeenCalled();
+    expect(commandMocks.runShowCommand).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(0);
   });
 
   it('reports unknown commands', async () => {

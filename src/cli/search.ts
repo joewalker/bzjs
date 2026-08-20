@@ -12,6 +12,7 @@ import type {
 } from '../bugzilla-types.js';
 import { Bugzilla } from '../bugzilla.js';
 import {
+  credentialsHelp,
   loadBugzillaDotEnv,
   resolveBugzillaConfiguration,
   userConfigFilePath,
@@ -347,7 +348,7 @@ function appendSearchField(
   lines.push(`- ${label}: ${escapeMarkdownInline(value)}`);
 }
 
-export const searchHelp = `Usage:
+export const searchCommandHelp = `Usage:
   bz-search [SUMMARY] [options]
   bzjs search [SUMMARY] [options]
 
@@ -372,11 +373,9 @@ Options:
   --origin URL               Bugzilla origin
   --env-file PATH            Override discovered configuration files
   -h, --help                 Show this help
-
-Credentials are read from the process environment, ./.env, or the per-user
-configuration at $XDG_CONFIG_HOME/bzjs/config.env (normally
-~/.config/bzjs/config.env).
 `;
+
+export const searchHelp = `${searchCommandHelp}\n${credentialsHelp}`;
 
 /**
  * Run bz-search and return a process exit code.
