@@ -91,13 +91,14 @@ Non-successful HTTP responses reject with `BugzillaApiError`. Its `status` prope
 
 ## Command-line tools
 
-The package installs `bz-help`, `bz-search`, and `bz-show`. It also installs a `bzjs` dispatcher so the commands are convenient to run directly from npm. The CLI requires Node 18.3 or newer.
+The package installs `bz-component-teams`, `bz-help`, `bz-search`, and `bz-show`. It also installs a `bzjs` dispatcher so the commands are convenient to run directly from npm. The CLI requires Node 18.3 or newer.
 
 ```sh
 # Run without a permanent installation
 npx @joewalker/bzjs search "scroll anchoring" --product Core --limit 10
 npx @joewalker/bzjs show 1234567
 npx @joewalker/bzjs show 'https://bugzilla.mozilla.org/show_bug.cgi?id=1234567'
+npx @joewalker/bzjs component-teams --format json
 
 # Select a standalone executable explicitly
 npx --package=@joewalker/bzjs bz-search --product Core
@@ -110,7 +111,7 @@ bz-show 1234567
 bz-show https://bugzil.la/1234567
 ```
 
-From a development checkout, run `pnpm build` followed by `npm link` to expose the three commands.
+From a development checkout, run `pnpm build` followed by `npm link` to expose the commands.
 
 ### Authentication
 
@@ -158,7 +159,7 @@ Use `BUGZILLA_ORIGIN` for another Bugzilla installation when authenticating. API
 
 ### bz-help
 
-`bz-help` prints the complete option reference for both `bz-show` and `bz-search`, with the shared credentials section shown once. It is equivalent to `bzjs help` and is intended as an easy way to give an LLM an overview of the command-line package.
+`bz-help` prints the complete option reference for `bz-component-teams`, `bz-show`, and `bz-search`, with the shared credentials section shown once. It is equivalent to `bzjs help` and is intended as an easy way to give an LLM an overview of the command-line package.
 
 ### bz-search
 
@@ -206,7 +207,35 @@ Comment 0, the initial description, follows the same policy. Missing group infor
 
 The default `--references known` mode extracts canonical Phabricator revisions and links to recognized development sites from redacted comments without including the surrounding prose or fetching the targets. Use `--references none` to disable extraction or `--references all` to retain all HTTP references.
 
-Use `--verbosity compact|normal|full`, `--max-comments`, and `--max-comment-chars` to bound the document. Run either command with `--help` for its complete option list, or run `bzjs help` for both command references in one LLM-friendly document.
+Use `--verbosity compact|normal|full`, `--max-comments`, and `--max-comment-chars` to bound the document. Run any command with `--help` for its complete option list, or run `bzjs help` for all command references in one LLM-friendly document.
+
+### bz-component-teams
+
+`bz-component-teams` fetches Bugzilla's component-team configuration and returns a deterministically sorted Markdown directory by default. Each team is a top-level heading followed by flat `Product::Component` list items. The dispatcher form is `bzjs component-teams`.
+
+Use `--team MATCHER` to include only team names containing a case-insensitive substring:
+
+```sh
+bzjs component-teams --team layout
+```
+
+Use `--format json` to emit the flat mapping used by tools that need to look up a team from a Bugzilla product and component:
+
+```sh
+bzjs component-teams --format json > component-team-map.json
+```
+
+The JSON output is an object whose keys use the exact `Product::Component` schema and whose values are team names:
+
+```json
+{
+  "Core::CSS Parsing and Computation": "Layout",
+  "Core::Layout": "Layout",
+  "Core::Layout: Tables": "Layout"
+}
+```
+
+Keys, teams, products, and components are sorted so repeated exports are stable. If Bugzilla assigns the same product and component to more than one team, the command exits with an error instead of overwriting either assignment.
 
 ## Development
 

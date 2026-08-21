@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { runComponentTeamsCommand } from '../cli/component-teams.js';
 import { help } from '../cli/help.js';
 import { processIo } from '../cli/runtime.js';
 import { runSearchCommand } from '../cli/search.js';
@@ -8,9 +9,10 @@ import { runShowCommand } from '../cli/show.js';
 const dispatcherHelp = `Usage:
   bzjs search [SUMMARY] [options]
   bzjs show BUG_ID_OR_URL [options]
+  bzjs component-teams [options]
   bzjs help
 
-The standalone bz-help, bz-search, and bz-show commands are also installed.
+The standalone bz-component-teams, bz-help, bz-search, and bz-show commands are also installed.
 `;
 
 const [command, ...args] = process.argv.slice(2);
@@ -21,6 +23,8 @@ if (command == null || command === '--help' || command === '-h') {
   process.exitCode = await runSearchCommand(args);
 } else if (command === 'show') {
   process.exitCode = await runShowCommand(args);
+} else if (command === 'component-teams') {
+  process.exitCode = await runComponentTeamsCommand(args);
 } else if (command === 'help') {
   processIo.stdout(help);
   process.exitCode = 0;

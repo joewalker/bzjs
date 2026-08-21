@@ -1,9 +1,14 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const commandMocks = vi.hoisted(() => ({
+  runComponentTeamsCommand: vi.fn().mockResolvedValue(30),
   help: 'combined command help\n',
   runSearchCommand: vi.fn().mockResolvedValue(10),
   runShowCommand: vi.fn().mockResolvedValue(20),
+}));
+
+vi.mock('../cli/component-teams.js', () => ({
+  runComponentTeamsCommand: commandMocks.runComponentTeamsCommand,
 }));
 
 vi.mock('../cli/help.js', () => ({
@@ -64,6 +69,18 @@ describe('standalone entry points', () => {
     expect(commandMocks.runShowCommand).toHaveBeenCalledWith(['123']);
     expect(process.exitCode).toBe(20);
   });
+
+  it('dispatches bz-component-teams arguments', async () => {
+    process.argv = ['node', 'bz-component-teams', '--format', 'json'];
+
+    await import('../bin/bz-component-teams.js');
+
+    expect(commandMocks.runComponentTeamsCommand).toHaveBeenCalledWith([
+      '--format',
+      'json',
+    ]);
+    expect(process.exitCode).toBe(30);
+  });
 });
 
 describe('bzjs dispatcher', () => {
@@ -98,6 +115,18 @@ describe('bzjs dispatcher', () => {
     expect(process.exitCode).toBe(20);
   });
 
+  it('dispatches component-teams', async () => {
+    process.argv = ['node', 'bzjs', 'component-teams', '--format', 'json'];
+
+    await import('../bin/bzjs.js');
+
+    expect(commandMocks.runComponentTeamsCommand).toHaveBeenCalledWith([
+      '--format',
+      'json',
+    ]);
+    expect(process.exitCode).toBe(30);
+  });
+
   it('prints the combined command help', async () => {
     process.argv = ['node', 'bzjs', 'help'];
     const stdout = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
@@ -107,6 +136,7 @@ describe('bzjs dispatcher', () => {
     expect(stdout).toHaveBeenCalledWith(commandMocks.help);
     expect(commandMocks.runSearchCommand).not.toHaveBeenCalled();
     expect(commandMocks.runShowCommand).not.toHaveBeenCalled();
+    expect(commandMocks.runComponentTeamsCommand).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(0);
   });
 

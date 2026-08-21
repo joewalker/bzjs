@@ -17,6 +17,7 @@
   ],
   "type": "module",
   "bin": {
+    "bz-component-teams": "./dist/bin/bz-component-teams.js",
     "bz-help": "./dist/bin/bz-help.js",
     "bz-search": "./dist/bin/bz-search.js",
     "bz-show": "./dist/bin/bz-show.js",

@@ -6,6 +6,7 @@ import type {
   BugCommentsReply,
   BugReply,
   BugzillaConstructorOptions,
+  ComponentTeamReply,
   CountResult,
   QueryParam,
   QueryParams,
@@ -440,9 +441,9 @@ export class Bugzilla {
   async getComponentsForTeam(
     team: string,
     logQuery = false,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<ComponentTeamReply> {
     const encodedTeam = encodeURIComponent(team);
-    return this.#query<Record<string, unknown>>(
+    return this.#query<ComponentTeamReply>(
       `/rest/config/component_teams/${encodedTeam}`,
       [],
       logQuery,

@@ -23,6 +23,7 @@ export type {
   BugCommentsReply,
   BugReply,
   BugzillaConstructorOptions,
+  ComponentTeamReply,
   CountResult,
   Detail,
   Flag,

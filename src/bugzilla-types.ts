@@ -6,6 +6,10 @@ export interface BugzillaConstructorOptions {
   readonly apiKey?: string;
 }
 
+export type ComponentTeamReply = Readonly<
+  Record<string, Readonly<Record<string, ReadonlyArray<string>>>>
+>;
+
 export type QueryParam = readonly [key: string, value: string];
 
 /**
