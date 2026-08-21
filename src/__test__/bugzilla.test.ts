@@ -15,6 +15,8 @@ import {
   Priority,
   Product,
   Type,
+  isKnownBugzillaOrigin,
+  withBugzillaOrigin,
 } from '../bugzilla.js';
 
 /**
@@ -458,17 +460,66 @@ describe('Bugzilla', () => {
   });
 
   describe('API key', () => {
-    it('should send the API key header when configured', async () => {
+    it('should send the API key header to a known origin', async () => {
       mockFetch({ bugs: [{ id: 1 }] });
 
       const bz = new Bugzilla({
-        origin: 'https://bz.test',
         apiKey: 'secret-key',
       });
       await bz.getBug(1);
 
       expect(fetchedHeaders()).toEqual({
         'X-BUGZILLA-API-KEY': 'secret-key',
+      });
+    });
+
+    it('should send the API key to its explicitly scoped origin', async () => {
+      mockFetch({ bugs: [{ id: 1 }] });
+
+      const bz = new Bugzilla({
+        apiKey: 'secret-key',
+        origin: 'https://BZ.test:443/',
+      });
+      await bz.getBug(1);
+
+      expect(fetchedHeaders()).toEqual({
+        'X-BUGZILLA-API-KEY': 'secret-key',
+      });
+    });
+
+    it('should enforce configured API key scope when retargeting', () => {
+      expect(() =>
+        withBugzillaOrigin(
+          { apiKey: 'secret-key', origin: 'https://bugzilla.mozilla.org' },
+          'https://attacker.example.com',
+        ),
+      ).toThrow('API key is not authorized for the requested origin');
+
+      expect(
+        withBugzillaOrigin(
+          { apiKey: 'secret-key', origin: 'https://BZ.test:443/' },
+          'https://bz.test',
+        ),
+      ).toEqual({ apiKey: 'secret-key', origin: 'https://bz.test' });
+    });
+
+    it('should reject malformed API key origins', () => {
+      expect(isKnownBugzillaOrigin('not a valid URL')).toBe(false);
+      expect(
+        () =>
+          new Bugzilla({
+            apiKey: 'secret-key',
+            origin: 'http://bz.test',
+          }),
+      ).toThrow('API key origins must be credential-free https URLs');
+      expect(() =>
+        withBugzillaOrigin({ apiKey: 'secret-key' }, 'not a valid URL'),
+      ).toThrow('API key is not authorized for the requested origin');
+    });
+
+    it('should retarget an unauthenticated client', () => {
+      expect(withBugzillaOrigin({}, 'https://bz.test')).toEqual({
+        origin: 'https://bz.test',
       });
     });
 

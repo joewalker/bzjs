@@ -10,7 +10,11 @@ import type {
   BugCommentsReply,
   BugzillaConstructorOptions,
 } from '../bugzilla-types.js';
-import { Bugzilla } from '../bugzilla.js';
+import {
+  Bugzilla,
+  isKnownBugzillaOrigin,
+  withBugzillaOrigin,
+} from '../bugzilla.js';
 import {
   credentialsHelp,
   loadBugzillaDotEnv,
@@ -38,16 +42,21 @@ export interface RenderBugMarkdownOptions {
   readonly verbosity: Verbosity;
 }
 
+export interface ShowTarget {
+  readonly id: number;
+  readonly origin?: string;
+}
+
 interface ParsedShowArguments {
   readonly commentsMode: CommentsMode;
   readonly envFile?: string;
   readonly help: boolean;
-  readonly id: number;
   readonly maxCommentCharacters: number;
   readonly maxComments: number;
   readonly origin?: string;
   readonly output?: string;
   readonly referencesMode: ReferencesMode;
+  readonly target: ShowTarget;
   readonly verbosity: Verbosity;
 }
 
@@ -104,6 +113,116 @@ export function classifyBugTrust(bug: Partial<Bug>): BugTrust {
 }
 
 /**
+ * Parse a numeric bug ID or supported Bugzilla browser URL.
+ */
+export function parseShowTarget(input: string): ShowTarget {
+  if (/^\d+$/u.test(input)) {
+    return { id: parseBugId(input) };
+  }
+
+  let url: URL;
+  try {
+    url = new URL(input);
+  } catch {
+    throw new Error('target must be a numeric bug ID or Bugzilla URL');
+  }
+
+  if (url.protocol !== 'https:') {
+    throw new Error('Bugzilla URL must use https');
+  }
+  if (url.username.length > 0 || url.password.length > 0) {
+    throw new Error('Bugzilla URL must not contain credentials');
+  }
+
+  if (url.hostname === 'bugzil.la') {
+    const match = /^\/(\d+)$/u.exec(url.pathname);
+    if (match?.[1] == null) {
+      throw new Error('bugzil.la URL must contain one numeric bug ID');
+    }
+    return {
+      id: parseBugId(match[1]),
+      origin: 'https://bugzilla.mozilla.org',
+    };
+  }
+
+  const suffix = '/show_bug.cgi';
+  if (!url.pathname.endsWith(suffix)) {
+    throw new Error('Bugzilla URL path must end with show_bug.cgi');
+  }
+  const ids = url.searchParams.getAll('id');
+  if (ids.length !== 1) {
+    throw new Error('Bugzilla URL must contain exactly one id parameter');
+  }
+
+  const basePath = url.pathname.slice(0, -suffix.length);
+  return {
+    id: parseBugId(ids[0]),
+    origin: normalizeBugzillaOrigin(`${url.origin}${basePath}`),
+  };
+}
+
+/**
+ * Parse and validate one positive, safely representable bug ID.
+ */
+function parseBugId(value: string): number {
+  if (!/^\d+$/u.test(value)) {
+    throw new Error('bug ID must be a positive integer');
+  }
+  const id = Number(value);
+  if (!Number.isSafeInteger(id) || id < 1) {
+    throw new Error('bug ID must be a positive integer');
+  }
+  return id;
+}
+
+/**
+ * Canonicalize a Bugzilla base URL for comparison and API requests.
+ */
+function normalizeBugzillaOrigin(origin: string): string {
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    throw new Error('Bugzilla origin must be a valid URL');
+  }
+  if (
+    url.protocol !== 'https:' ||
+    url.username.length > 0 ||
+    url.password.length > 0 ||
+    url.search.length > 0 ||
+    url.hash.length > 0
+  ) {
+    throw new Error(
+      'Bugzilla origin must be an https URL without credentials, query, or fragment',
+    );
+  }
+  return `${url.origin}${url.pathname.replace(/\/+$/u, '')}`;
+}
+
+/**
+ * Refuse URL-derived origins that are not known or configured.
+ */
+function validateShowTargetOrigin(
+  parsed: ParsedShowArguments,
+  configured: BugzillaConstructorOptions,
+): void {
+  const targetOrigin = parsed.target.origin;
+  if (targetOrigin == null) {
+    return;
+  }
+
+  const configuredOrigin = normalizeBugzillaOrigin(
+    configured.origin ?? 'https://bugzilla.mozilla.org',
+  );
+  const configuredForTarget = configuredOrigin === targetOrigin;
+
+  if (!isKnownBugzillaOrigin(targetOrigin) && !configuredForTarget) {
+    const hostname = new URL(targetOrigin).hostname;
+    throw new Error(`${hostname} is not a trusted Bugzilla origin`);
+  }
+}
+
+/**
  * Parse bz-show command-line arguments.
  */
 export function parseShowArguments(
@@ -120,20 +239,24 @@ export function parseShowArguments(
     return {
       commentsMode: 'auto',
       help,
-      id: 0,
       maxCommentCharacters: 4_000,
       maxComments: 20,
       referencesMode: 'known',
+      target: { id: 0 },
       verbosity: 'normal',
     };
   }
-  if (positionals.length !== 1 || !/^\d+$/u.test(positionals[0])) {
-    throw new Error('exactly one numeric bug ID is required');
+  if (positionals.length !== 1) {
+    throw new Error('exactly one bug ID or URL is required');
   }
 
-  const id = Number(positionals[0]);
-  if (!Number.isSafeInteger(id) || id < 1) {
-    throw new Error('bug ID must be a positive integer');
+  const target = parseShowTarget(positionals[0]);
+  if (
+    target.origin != null &&
+    values.origin != null &&
+    normalizeBugzillaOrigin(values.origin) !== target.origin
+  ) {
+    throw new Error('--origin conflicts with the Bugzilla URL');
   }
   const verbosity = parseChoice(
     values.verbosity,
@@ -166,7 +289,6 @@ export function parseShowArguments(
     commentsMode,
     ...(values['env-file'] == null ? {} : { envFile: values['env-file'] }),
     help,
-    id,
     maxCommentCharacters:
       values['max-comment-chars'] == null
         ? defaultMaxCharacters
@@ -181,6 +303,7 @@ export function parseShowArguments(
     ...(values.origin == null ? {} : { origin: values.origin }),
     ...(values.output == null ? {} : { output: values.output }),
     referencesMode,
+    target,
     verbosity,
   };
 }
@@ -540,8 +663,8 @@ function truncateComment(text: string, limit: number): string {
 }
 
 export const showCommandHelp = `Usage:
-  bz-show BUG_ID [options]
-  bzjs show BUG_ID [options]
+  bz-show BUG_ID_OR_URL [options]
+  bzjs show BUG_ID_OR_URL [options]
 
 Options:
   --verbosity LEVEL          compact, normal, or full
@@ -549,10 +672,13 @@ Options:
   --references MODE          none, known, or all; defaults to known
   --max-comments NUMBER      Maximum included comment bodies
   --max-comment-chars NUMBER Maximum characters per included comment
-  --origin URL               Bugzilla origin
+  --origin URL               Bugzilla origin; inferred from a URL target
   --env-file PATH            Override discovered configuration files
   -o, --output FILE          Write Markdown to a file instead of stdout
   -h, --help                 Show this help
+
+When the target is a URL, the bug ID and Bugzilla origin are inferred from it.
+Custom URL origins must match BUGZILLA_ORIGIN. --origin does not authorize keys.
 
 In auto mode, comments are included only when the bug has a non-empty groups\
 array. Public and unclassified bug comments are redacted.
@@ -586,10 +712,12 @@ export async function runShowCommand(
       environment,
       dotEnv,
     );
-    const connectionOptions: BugzillaConstructorOptions = {
-      ...environmentOptions,
-      ...(parsed.origin == null ? {} : { origin: parsed.origin }),
-    };
+    validateShowTargetOrigin(parsed, environmentOptions);
+    const requestedOrigin = parsed.target.origin ?? parsed.origin;
+    const connectionOptions =
+      requestedOrigin == null
+        ? environmentOptions
+        : withBugzillaOrigin(environmentOptions, requestedOrigin);
     const bugzilla = new Bugzilla(connectionOptions);
     errorContext = {
       apiKeyConfigured: connectionOptions.apiKey != null,
@@ -597,15 +725,17 @@ export async function runShowCommand(
       origin: bugzilla.origin,
       userConfigFile: userConfigFilePath(environment),
     };
-    const bug = await bugzilla.getBug(parsed.id);
+    const bug = await bugzilla.getBug(parsed.target.id);
     const trust = classifyBugTrust(bug);
     const fetchComments =
       parsed.referencesMode !== 'none' ||
       parsed.commentsMode === 'all' ||
       (parsed.commentsMode === 'auto' && trust === 'restricted');
     const [comments, attachments] = await Promise.all([
-      fetchComments ? bugzilla.comments(parsed.id) : Promise.resolve(undefined),
-      bugzilla.attachments(parsed.id, { excludeFields: ['data'] }),
+      fetchComments
+        ? bugzilla.comments(parsed.target.id)
+        : Promise.resolve(undefined),
+      bugzilla.attachments(parsed.target.id, { excludeFields: ['data'] }),
     ]);
     const markdown = renderBugMarkdown({
       attachments,

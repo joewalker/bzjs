@@ -14,6 +14,9 @@ Credentials are read from the process environment, \
 or the per-user configuration at $XDG_CONFIG_HOME/bzjs/config.env \
 (normally ~/.config/bzjs/config.env).
 
+API keys are sent only to bugzilla.mozilla.org or the BUGZILLA_ORIGIN \
+configured alongside the key.
+
 To access all bugs visible to your account, \
 sign in and create or manage an API key here:
   https://bugzilla.mozilla.org/userprefs.cgi?tab=apikey
@@ -123,10 +126,12 @@ export function resolveBugzillaConfiguration(
     dotEnv['BUGZILLA_API_KEY'] ??
     dotEnv['BUGZILLA-API-KEY'];
   const origin = environment['BUGZILLA_ORIGIN'] ?? dotEnv['BUGZILLA_ORIGIN'];
+  const hasApiKey = apiKey != null && apiKey.length > 0;
+  const hasOrigin = origin != null && origin.length > 0;
 
   return {
-    ...(apiKey == null || apiKey.length === 0 ? {} : { apiKey }),
-    ...(origin == null || origin.length === 0 ? {} : { origin }),
+    ...(hasApiKey ? { apiKey } : {}),
+    ...(hasOrigin ? { origin } : {}),
   };
 }
 

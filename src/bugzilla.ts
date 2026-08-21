@@ -25,6 +25,61 @@ export {
   Type,
 } from './bugzilla-literals.js';
 
+const defaultBugzillaOrigin = 'https://bugzilla.mozilla.org';
+const knownBugzillaOrigins = new Set([defaultBugzillaOrigin]);
+
+/**
+ * Canonicalize an origin used for API key authorization.
+ */
+function normalizeApiKeyOrigin(origin: string): string {
+  const url = new URL(origin);
+  if (
+    url.protocol !== 'https:' ||
+    url.username.length > 0 ||
+    url.password.length > 0 ||
+    url.search.length > 0 ||
+    url.hash.length > 0
+  ) {
+    throw new Error('API key origins must be credential-free https URLs');
+  }
+  return `${url.origin}${url.pathname.replace(/\/+$/u, '')}`;
+}
+
+/**
+ * Return whether an origin is a built-in known Bugzilla instance.
+ */
+export function isKnownBugzillaOrigin(origin: string): boolean {
+  try {
+    return knownBugzillaOrigins.has(normalizeApiKeyOrigin(origin));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Select a request origin without moving an API key between origins.
+ */
+export function withBugzillaOrigin(
+  options: BugzillaConstructorOptions,
+  origin: string,
+): BugzillaConstructorOptions {
+  if (options.apiKey != null) {
+    const configuredOrigin = options.origin ?? defaultBugzillaOrigin;
+    let matchesConfiguredOrigin = false;
+    try {
+      matchesConfiguredOrigin =
+        normalizeApiKeyOrigin(configuredOrigin) ===
+        normalizeApiKeyOrigin(origin);
+    } catch {
+      matchesConfiguredOrigin = false;
+    }
+    if (!matchesConfiguredOrigin) {
+      throw new Error('API key is not authorized for the requested origin');
+    }
+  }
+  return { ...options, origin };
+}
+
 /**
  * Formats a Date as 'yyyy-MM-dd' for Bugzilla query parameters.
  */
@@ -104,7 +159,10 @@ export class Bugzilla {
    *
    */
   constructor(options: BugzillaConstructorOptions = {}) {
-    const { origin = 'https://bugzilla.mozilla.org', apiKey } = options;
+    const { origin = defaultBugzillaOrigin, apiKey } = options;
+    if (apiKey != null) {
+      normalizeApiKeyOrigin(origin);
+    }
 
     this.origin = origin;
     this.#apiKey = apiKey;

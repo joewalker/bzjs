@@ -7,7 +7,7 @@ import { runShowCommand } from '../cli/show.js';
 
 const dispatcherHelp = `Usage:
   bzjs search [SUMMARY] [options]
-  bzjs show BUG_ID [options]
+  bzjs show BUG_ID_OR_URL [options]
   bzjs help
 
 The standalone bz-help, bz-search, and bz-show commands are also installed.

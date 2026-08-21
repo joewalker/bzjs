@@ -97,6 +97,7 @@ The package installs `bz-help`, `bz-search`, and `bz-show`. It also installs a `
 # Run without a permanent installation
 npx @joewalker/bzjs search "scroll anchoring" --product Core --limit 10
 npx @joewalker/bzjs show 1234567
+npx @joewalker/bzjs show 'https://bugzilla.mozilla.org/show_bug.cgi?id=1234567'
 
 # Select a standalone executable explicitly
 npx --package=@joewalker/bzjs bz-search --product Core
@@ -106,6 +107,7 @@ npm exec --package=@joewalker/bzjs -- bz-show 1234567
 npm install -g @joewalker/bzjs
 bz-search --product Core
 bz-show 1234567
+bz-show https://bugzil.la/1234567
 ```
 
 From a development checkout, run `pnpm build` followed by `npm link` to expose the three commands.
@@ -150,9 +152,9 @@ Configuration precedence is:
 3. `.env` in the current working directory.
 4. The per-user configuration file.
 
-An explicit `--env-file` replaces both automatically discovered files. API keys are sent only in the `X-BUGZILLA-API-KEY` request header and are never included in command output or query URLs. Do not commit `.env` files.
+An explicit `--env-file` replaces both automatically discovered files. API keys are sent only in the `X-BUGZILLA-API-KEY` request header and are never included in command output or query URLs.
 
-Use `BUGZILLA_ORIGIN` or `--origin` for another Bugzilla installation.
+Use `BUGZILLA_ORIGIN` for another Bugzilla installation when authenticating. API keys are scoped to that configured origin by the `Bugzilla` client. `--origin` can select another instance for unauthenticated requests, but it never authorizes an instance to receive a key. This is to avoid LLMs accidentally disclosing API keys.
 
 ### bz-help
 
@@ -182,12 +184,16 @@ bz-search --where priority:anyexact:P1
 
 ### bz-show
 
-`bz-show BUG_ID` writes an LLM-oriented Markdown document to stdout. Redirect it normally or use `--output`:
+`bz-show BUG_ID_OR_URL` writes an LLM-oriented Markdown document to stdout. Redirect it normally or use `--output`:
 
 ```sh
 bz-show 1234567 > bug-1234567.md
 bz-show 1234567 --output bug-1234567.md
+bz-show 'https://bugzilla.mozilla.org/show_bug.cgi?id=1234567'
+bz-show 'https://bugzil.la/1234567'
 ```
+
+When the target is a URL, `bz-show` infers both the bug ID and the Bugzilla base URL. This also supports Bugzilla installations under a path, such as `https://bugs.example.com/bugzilla/show_bug.cgi?id=123`. Bugzilla.mozilla.org is trusted by default. Other URL-derived origins must match the configured `BUGZILLA_ORIGIN`; `--origin` selects a destination but does not authorize it to receive an API key. Direct library callers explicitly bind an API key to the `origin` passed to the `Bugzilla` constructor.
 
 Comments use a fail-closed trust policy because public Bugzilla comments may contain prompt injection:
 

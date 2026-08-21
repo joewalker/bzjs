@@ -7,6 +7,7 @@ import type { CliIo } from '../cli/runtime.js';
 import {
   classifyBugTrust,
   parseShowArguments,
+  parseShowTarget,
   renderBugMarkdown,
   runShowCommand,
   showHelp,
@@ -119,10 +120,10 @@ describe('parseShowArguments', () => {
     expect(parseShowArguments(['--help'])).toEqual({
       commentsMode: 'auto',
       help: true,
-      id: 0,
       maxCommentCharacters: 4_000,
       maxComments: 20,
       referencesMode: 'known',
+      target: { id: 0 },
       verbosity: 'normal',
     });
   });
@@ -131,10 +132,10 @@ describe('parseShowArguments', () => {
     expect(parseShowArguments(['123'])).toMatchObject({
       commentsMode: 'auto',
       help: false,
-      id: 123,
       maxCommentCharacters: 4_000,
       maxComments: 20,
       referencesMode: 'known',
+      target: { id: 123 },
       verbosity: 'normal',
     });
   });
@@ -166,12 +167,12 @@ describe('parseShowArguments', () => {
     ).toMatchObject({
       commentsMode: 'none',
       envFile: 'custom.env',
-      id: 123,
       maxCommentCharacters: 4_000,
       maxComments: 0,
       origin: 'https://bz.example.com',
       output: 'bug.md',
       referencesMode: 'all',
+      target: { id: 123 },
       verbosity: 'compact',
     });
   });
@@ -193,9 +194,9 @@ describe('parseShowArguments', () => {
   });
 
   it.each([
-    [[], 'exactly one numeric bug ID'],
-    [['abc'], 'exactly one numeric bug ID'],
-    [['1', '2'], 'exactly one numeric bug ID'],
+    [[], 'exactly one bug ID or URL'],
+    [['abc'], 'bug ID or Bugzilla URL'],
+    [['1', '2'], 'exactly one bug ID or URL'],
     [['0'], 'positive integer'],
     [['999999999999999999999'], 'positive integer'],
     [['1', '--verbosity', 'verbose'], 'verbosity must be one of'],
@@ -203,8 +204,88 @@ describe('parseShowArguments', () => {
     [['1', '--references', 'some'], 'references must be one of'],
     [['1', '--max-comments=-1'], 'must be a nonnegative integer'],
     [['1', '--max-comments', '999999999999999999999'], 'is too large'],
+    [
+      [
+        'https://bugzilla.mozilla.org/show_bug.cgi?id=1',
+        '--origin',
+        'not a valid URL',
+      ],
+      'Bugzilla origin must be a valid URL',
+    ],
+    [
+      [
+        'https://bugzilla.mozilla.org/show_bug.cgi?id=1',
+        '--origin',
+        'http://bugzilla.mozilla.org',
+      ],
+      'Bugzilla origin must be an https URL',
+    ],
   ])('rejects invalid arguments %#', (args, message) => {
     expect(() => parseShowArguments(args)).toThrow(message);
+  });
+
+  it('accepts an equivalent explicit origin for a URL target', () => {
+    expect(
+      parseShowArguments([
+        'https://bugs.example.com/bugzilla/show_bug.cgi?id=123',
+        '--origin',
+        'https://BUGS.example.com:443/bugzilla/',
+      ]),
+    ).toMatchObject({
+      origin: 'https://BUGS.example.com:443/bugzilla/',
+      target: { id: 123, origin: 'https://bugs.example.com/bugzilla' },
+    });
+  });
+
+  it('rejects a conflicting explicit origin for a URL target', () => {
+    expect(() =>
+      parseShowArguments([
+        'https://bugzilla.mozilla.org/show_bug.cgi?id=123',
+        '--origin',
+        'https://bugs.example.com',
+      ]),
+    ).toThrow('--origin conflicts with the Bugzilla URL');
+  });
+});
+
+describe('parseShowTarget', () => {
+  it.each([
+    ['123', { id: 123 }],
+    [
+      'https://bugzilla.mozilla.org/show_bug.cgi?id=123',
+      { id: 123, origin: 'https://bugzilla.mozilla.org' },
+    ],
+    [
+      'https://bugs.example.com/bugzilla/show_bug.cgi?id=456',
+      { id: 456, origin: 'https://bugs.example.com/bugzilla' },
+    ],
+    [
+      'https://bugs.example.com/bugzilla/show_bug.cgi?format=multiple&id=789&list_id=10',
+      { id: 789, origin: 'https://bugs.example.com/bugzilla' },
+    ],
+    [
+      'https://bugzil.la/321',
+      { id: 321, origin: 'https://bugzilla.mozilla.org' },
+    ],
+  ])('parses %s', (input, expected) => {
+    expect(parseShowTarget(input)).toEqual(expected);
+  });
+
+  it.each([
+    'http://bugzilla.mozilla.org/show_bug.cgi?id=123',
+    'ftp://bugzilla.mozilla.org/show_bug.cgi?id=123',
+    'https://user:password@bugzilla.mozilla.org/show_bug.cgi?id=123',
+    'https://bugzilla.mozilla.org/buglist.cgi?id=123',
+    'https://bugzilla.mozilla.org/show_bug.cgi',
+    'https://bugzilla.mozilla.org/show_bug.cgi?id=1&id=2',
+    'https://bugzilla.mozilla.org/show_bug.cgi?id=abc',
+    'https://bugzilla.mozilla.org/show_bug.cgi?id=0',
+    'https://bugzilla.mozilla.org/show_bug.cgi?id=999999999999999999999',
+    'https://bugzil.la/not-a-number',
+    'https://bugzil.la/0',
+    'https://bugs.example.com/bugzil.la/123',
+  ])('rejects invalid target %s', input => {
+    expect(() => parseShowTarget(input)).toThrow();
   });
 });
 
@@ -577,6 +658,168 @@ describe('runShowCommand', () => {
     expect(stdout.mock.calls[0]?.[0]).toContain('# Bug 123');
   });
 
+  it('uses a URL-derived origin for API calls and generated links', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(input => {
+      const url = String(input);
+      const body = url.includes('/attachment?')
+        ? attachments
+        : { bugs: [baseBug] };
+      return Promise.resolve(
+        new Response(JSON.stringify(body), {
+          headers: { 'content-type': 'application/json' },
+          status: 200,
+        }),
+      );
+    });
+    const { io, stdout } = mockIo();
+
+    await expect(
+      runShowCommand(
+        [
+          'https://bugs.example.com/bugzilla/show_bug.cgi?id=123',
+          '--references',
+          'none',
+        ],
+        io,
+        {
+          BUGZILLA_API_KEY: 'custom-instance-key',
+          BUGZILLA_ORIGIN: 'https://bugs.example.com/bugzilla/',
+          XDG_CONFIG_HOME: temporaryDirectory,
+        },
+        temporaryDirectory,
+      ),
+    ).resolves.toBe(0);
+
+    expect(fetchSpy.mock.calls.map(([input]) => String(input))).toEqual([
+      'https://bugs.example.com/bugzilla/rest/bug/123?',
+      'https://bugs.example.com/bugzilla/rest/bug/123/attachment?exclude_fields=data',
+    ]);
+    expect(
+      fetchSpy.mock.calls.every(([_input, init]) =>
+        JSON.stringify(init).includes('custom-instance-key'),
+      ),
+    ).toBe(true);
+    expect(stdout.mock.calls[0]?.[0]).toContain(
+      'https://bugs.example.com/bugzilla/show_bug.cgi?id=123',
+    );
+  });
+
+  it('refuses an untrusted URL without sending the configured API key', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const { io, stderr } = mockIo();
+
+    await expect(
+      runShowCommand(
+        ['https://attacker.example.com/show_bug.cgi?id=123'],
+        io,
+        {
+          BUGZILLA_API_KEY: 'secret-key-for-bmo',
+          BUGZILLA_ORIGIN: 'https://bugzilla.mozilla.org',
+          XDG_CONFIG_HOME: temporaryDirectory,
+        },
+        temporaryDirectory,
+      ),
+    ).resolves.toBe(1);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(stderr.mock.calls[0]?.[0]).toContain(
+      'attacker.example.com is not a trusted Bugzilla origin',
+    );
+  });
+
+  it('refuses an untrusted URL even when no API key is configured', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const { io, stderr } = mockIo();
+
+    await expect(
+      runShowCommand(
+        ['https://attacker.example.com/show_bug.cgi?id=123'],
+        io,
+        { XDG_CONFIG_HOME: temporaryDirectory },
+        temporaryDirectory,
+      ),
+    ).resolves.toBe(1);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(stderr.mock.calls[0]?.[0]).toContain(
+      'attacker.example.com is not a trusted Bugzilla origin',
+    );
+  });
+
+  it('does not treat a matching explicit origin as authorization', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const { io, stderr } = mockIo();
+
+    await expect(
+      runShowCommand(
+        [
+          'https://bugs.example.com/show_bug.cgi?id=123',
+          '--origin',
+          'https://bugs.example.com/',
+          '--references',
+          'none',
+        ],
+        io,
+        {
+          BUGZILLA_API_KEY: 'explicitly-authorized-key',
+          BUGZILLA_ORIGIN: 'https://bugzilla.mozilla.org',
+          XDG_CONFIG_HOME: temporaryDirectory,
+        },
+        temporaryDirectory,
+      ),
+    ).resolves.toBe(1);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(stderr.mock.calls[0]?.[0]).toContain(
+      'bugs.example.com is not a trusted Bugzilla origin',
+    );
+  });
+
+  it('does not send a custom instance API key to a different known origin', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const { io, stderr } = mockIo();
+
+    await expect(
+      runShowCommand(
+        ['https://bugzilla.mozilla.org/show_bug.cgi?id=123'],
+        io,
+        {
+          BUGZILLA_API_KEY: 'secret-key-for-custom-instance',
+          BUGZILLA_ORIGIN: 'https://bugs.example.com/bugzilla',
+          XDG_CONFIG_HOME: temporaryDirectory,
+        },
+        temporaryDirectory,
+      ),
+    ).resolves.toBe(1);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(stderr.mock.calls[0]?.[0]).toContain(
+      'API key is not authorized for the requested origin',
+    );
+  });
+
+  it('enforces API key scope for a numeric target with --origin', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const { io, stderr } = mockIo();
+
+    await expect(
+      runShowCommand(
+        ['123', '--origin', 'https://attacker.example.com'],
+        io,
+        {
+          BUGZILLA_API_KEY: 'secret-key-for-bmo',
+          XDG_CONFIG_HOME: temporaryDirectory,
+        },
+        temporaryDirectory,
+      ),
+    ).resolves.toBe(1);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(stderr.mock.calls[0]?.[0]).toContain(
+      'API key is not authorized for the requested origin',
+    );
+  });
+
   it('fetches comments for restricted bugs and writes a private output file', async () => {
     vi.spyOn(Bugzilla.prototype, 'getBug').mockResolvedValue({
       ...baseBug,
@@ -590,7 +833,11 @@ describe('runShowCommand', () => {
       runShowCommand(
         ['123', '--output', 'bug.md', '--origin', 'https://bz.example.com'],
         io,
-        { BUGZILLA_API_KEY: 'key', XDG_CONFIG_HOME: temporaryDirectory },
+        {
+          BUGZILLA_API_KEY: 'key',
+          BUGZILLA_ORIGIN: 'https://bz.example.com',
+          XDG_CONFIG_HOME: temporaryDirectory,
+        },
         temporaryDirectory,
       ),
     ).resolves.toBe(0);
@@ -604,7 +851,7 @@ describe('runShowCommand', () => {
     const invalid = mockIo();
     await expect(runShowCommand([], invalid.io)).resolves.toBe(1);
     expect(invalid.stderr).toHaveBeenCalledWith(
-      'bz-show: exactly one numeric bug ID is required\n',
+      'bz-show: exactly one bug ID or URL is required\n',
     );
 
     vi.spyOn(Bugzilla.prototype, 'getBug').mockRejectedValue(
@@ -622,5 +869,24 @@ describe('runShowCommand', () => {
     expect(denied.stderr.mock.calls[0]?.[0]).toContain(
       'No Bugzilla API key was found',
     );
+  });
+
+  it('rejects an invalid URL before loading configuration', async () => {
+    const { io, stderr } = mockIo();
+
+    await expect(
+      runShowCommand(
+        [
+          'https://bugzilla.mozilla.org/buglist.cgi?id=123',
+          '--env-file',
+          'missing.env',
+        ],
+        io,
+        { XDG_CONFIG_HOME: temporaryDirectory },
+        temporaryDirectory,
+      ),
+    ).resolves.toBe(1);
+    expect(stderr.mock.calls[0]?.[0]).toContain('Bugzilla URL');
+    expect(stderr.mock.calls[0]?.[0]).not.toContain('ENOENT');
   });
 });

@@ -322,7 +322,11 @@ describe('runSearchCommand', () => {
       runSearchCommand(
         ['--format', 'json', '--origin', 'https://bz.example.com'],
         io,
-        { BUGZILLA_API_KEY: 'key', XDG_CONFIG_HOME: temporaryDirectory },
+        {
+          BUGZILLA_API_KEY: 'key',
+          BUGZILLA_ORIGIN: 'https://bz.example.com',
+          XDG_CONFIG_HOME: temporaryDirectory,
+        },
         temporaryDirectory,
       ),
     ).resolves.toBe(0);

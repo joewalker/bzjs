@@ -4,13 +4,8 @@ import { parseArgs } from 'node:util';
 import { BugField } from '../bug-fields.js';
 import { BugStatus, MatchType } from '../bugzilla-literals.js';
 import type { BugStatusEnum, MatchTypeEnum } from '../bugzilla-literals.js';
-import type {
-  Bug,
-  BugzillaConstructorOptions,
-  SearchParams,
-  SearchResult,
-} from '../bugzilla-types.js';
-import { Bugzilla } from '../bugzilla.js';
+import type { Bug, SearchParams, SearchResult } from '../bugzilla-types.js';
+import { Bugzilla, withBugzillaOrigin } from '../bugzilla.js';
 import {
   credentialsHelp,
   loadBugzillaDotEnv,
@@ -403,10 +398,10 @@ export async function runSearchCommand(
       environment,
       dotEnv,
     );
-    const connectionOptions: BugzillaConstructorOptions = {
-      ...environmentOptions,
-      ...(parsed.origin == null ? {} : { origin: parsed.origin }),
-    };
+    const connectionOptions =
+      parsed.origin == null
+        ? environmentOptions
+        : withBugzillaOrigin(environmentOptions, parsed.origin);
     const bugzilla = new Bugzilla(connectionOptions);
     errorContext = {
       apiKeyConfigured: connectionOptions.apiKey != null,
