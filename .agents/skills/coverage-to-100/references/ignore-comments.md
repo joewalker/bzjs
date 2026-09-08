@@ -1,6 +1,6 @@
 # Coverage ignore comments
 
-BZJS uses Vitest's v8 coverage provider through `ast-v8-to-istanbul`. It reads ignore comments from the original TypeScript source and supports the usual Istanbul markers.
+This project uses Vitest's v8 coverage provider through `ast-v8-to-istanbul`. It reads ignore comments from the original TypeScript source and supports the usual Istanbul markers.
 
 Use the narrowest marker that excludes only the code that cannot be exercised. Do not use an ignore to avoid testing reachable behavior.
 
