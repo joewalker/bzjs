@@ -59,7 +59,7 @@ Bugs are tracked as issues in this [project's Github repository](https://github.
 ## Completing Work
 
 - If you have changed any code, before finishing:
-  - Check tests pass `pnpm tsc && pnpm test`
+  - Check tests pass and coverage is at 100% `pnpm tsc && pnpm test --coverage`
   - Check with lint and fix any linting errors `pnpm lint`
   - Run oxfmt `pnpm format`
 - Never alter git (this includes altering the index, e.g. `git add`, `git mv`, `git rm`) without the users explicit request

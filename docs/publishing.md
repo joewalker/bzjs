@@ -12,7 +12,7 @@ Before publishing, update the package version in `package.json`, then run:
 ```sh
 pnpm format
 pnpm tsc
-pnpm test
+pnpm test --coverage
 pnpm lint
 pnpm pack --dry-run
 ```
