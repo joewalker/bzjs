@@ -37,7 +37,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "rm -rf dist cache/tsconfig.build.tsbuildinfo && tsc -p tsconfig.build.json",
+    "build": "rm -rf dist cache/tsconfig.build.tsbuildinfo && tsc -p tsconfig.build.json && chmod +x dist/bin/*.js",
     "clean": "rm -rf dist cache/tsconfig.build.tsbuildinfo",
     "format": "oxfmt",
     "lint": "oxlint",
